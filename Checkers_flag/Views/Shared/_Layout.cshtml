@@ -1,0 +1,22 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Checkers_flag</title>
+    <link href="~/bootstraps/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="~/css/site.css" rel="stylesheet" />
+</head>
+<body>
+
+    <div class="container">
+        @RenderBody()
+    </div>
+
+    <script src="~/bootstraps/js/jquery-3.3.1.min.js"></script>
+    <script src="~/bootstraps/js/bootstrap.min.js"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+
+    
+</body>
+</html>

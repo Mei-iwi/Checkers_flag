@@ -1,0 +1,78 @@
+﻿@{
+    ViewData["Title"] = "Chơi với Máy";
+}
+<style>
+    #outGame {
+        border: none;
+        padding: 10px 20px;
+        font-size: 18px;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.4s ease-in-out;
+    }
+    #outGame:hover {
+        background-color: #0056b3;
+        transform: scale(1.1);
+    }
+</style>
+<div class="container">
+    <div class="background-board">
+        <h4 class="text-center" id="text">CỜ CARO MINIMAX - AI</h4>
+
+        <!-- Khu vực chọn lượt và nút Start -->
+        <div class="mb-2 text-center" id="start">
+            <div id="selectOption">
+                <label class="mr-3 text-light">Chọn người đi trước:</label>
+                <div class="group-select">
+                    <input type="radio" name="firstPlayer" value="1" checked />
+                    <span class="text-danger select">❌</span>
+                </div>
+                <div class="group-select">
+                    <input type="radio" name="firstPlayer" value="2" />
+                    <span class="text-primary select">O</span>
+                </div>
+            </div>
+
+            <div class="btn-start mt-4">
+                <button onclick="window.location.href='@Url.Action("Home", "Home")'" id="outGame" class="btn btn-danger btn-sm ml-3">
+                    Quay lại
+                </button>
+                <button id="btnStart" class="btn btn-success btn-sm ml-3">
+                    CHƠI VỚI MÁY
+                </button>
+            </div>
+        </div>
+
+        <!-- Bàn cờ -->
+        <div id="board"></div>
+
+        <!-- Thanh trạng thái -->
+        <div id="end" style="display:none; gap:10px; margin-top:10px;">
+            <span id="endgame" class="alert btn btn-danger">Đầu hàng</span>
+            <span id="time" class="alert alert-primary">Time</span>
+            <span id="who" class="alert alert-success"></span>
+        </div>
+
+        <!-- Overlay thắng thua -->
+        <div id="overlay" class="overlay" style="display:none;">
+            <div class="overlay-content">
+                <h2 id="winnerText"></h2>
+                <button id="btnReplay" class="mr-3 btn btn-success">Chơi lại</button>
+                <button id="btnEnd" class="btn btn-danger">Thoát</button>
+            </div>
+        </div>
+
+        <!-- Overlay đầu hàng -->
+        <div id="overlayCancel" class="overlay" style="display:none;">
+            <div class="overlay-content">
+                <h2 id="CancelGame"></h2>
+                <button id="btnReplayCancel" class="mr-3 btn btn-danger">Kết thúc </button>
+                <button id="btnEndGame" class="btn btn-primary">Tiếp tục</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/Human_AI.js"></script>
+}

@@ -1,0 +1,38 @@
+﻿@{
+    ViewData["Title"] = "Chọn chế độ chơi";
+}
+<style>
+    .btn {
+        border: none;
+        padding: 10px 20px;
+        font-size: 18px;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.4s ease-in-out;
+        width:250px;
+        height:100px;
+        font-weight:bold;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+    }
+
+    .btn:hover {
+            background-color: #0056b3;
+            transform: scale(1.1);
+        }
+
+    .background-board{
+        height:350px;
+        width:800px;
+    }
+</style>
+<div class="text-center mt-5 background-board w-100">
+    <h2 class="mb-lg-5 text-center w-100" id="text">CHỌN CHẾ ĐỘ CỜ CARO</h2>
+   
+    <div class="button d-flex justify-content-center ">
+        @Html.ActionLink("CHƠI VỚI NGƯỜI", "withHuman", "Home", null, new { @class = "btn btn-primary btn-lg mr-2" })
+        @Html.ActionLink("CHƠI VỚI MÁY", "withAI", "Home", null, new { @class = "btn btn-primary btn-lg  ml-2" })
+    </div>
+  
+</div>
