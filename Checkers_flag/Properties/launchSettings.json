@@ -27,6 +27,17 @@
         "ASPNETCORE_ENVIRONMENT": "Development"
       }
     },
+    "Checkers_flag (NoConsole)": {
+      "commandName": "Executable",
+      "executablePath": "dotnet",
+      "workingDirectory": "$(ProjectDir)",
+      "commandLineArgs": "run --no-launch-profile",
+      "launchBrowser": true,
+      "applicationUrl": "https://localhost:7202;http://localhost:5202",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      }
+    },
     "IIS Express": {
       "commandName": "IISExpress",
       "launchBrowser": true,

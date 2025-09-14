@@ -40,7 +40,7 @@ function handleClickPvP(cell, i, j) {
     if (cellsPvP[i][j] !== 0) return;
 
     $.ajax({
-        url: "/Game/MoveHuman",  // ⚡ Action riêng cho PvP
+        url: "/Game/MoveHuman", 
         type: "POST",
         data: { row: i, col: j, player: currentPlayerPvP },
         success: function (res) {
