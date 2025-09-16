@@ -39,14 +39,18 @@ function handleClickPvP(cell, i, j) {
     if (!gameStartedPvP) return;
     if (cellsPvP[i][j] !== 0) return;
 
+    // === Người chơi đánh ngay trên client ===
+    cellsPvP[i][j] = currentPlayerPvP;
+    renderBoardPvP(cellsPvP);
+
     $.ajax({
-        url: "/Game/MoveHuman",
+        url: "/GameWithHuman/MoveHuman",  // Controller = GameWithHuman, Action = MoveHuman
         type: "POST",
         data: { row: i, col: j, player: currentPlayerPvP },
         success: function (res) {
             if (!res.success) return;
 
-            // Cập nhật lại bàn cờ theo dữ liệu server trả về
+            // Cập nhật lại bàn cờ từ server
             for (let r = 0; r < N_PvP; r++) {
                 for (let c = 0; c < N_PvP; c++) {
                     cellsPvP[r][c] = res.board[r][c];
@@ -79,7 +83,7 @@ function handleClickPvP(cell, i, j) {
                 $("#winnerText").html("🎉 Người chơi " + winnerSymbol + " đã thắng!");
                 $("#overlay").fadeIn();
             }
-            // Xử lý hòa (nếu server có trả về cờ isDraw)
+            // Xử lý hòa
             else if (res.isDraw) {
                 clearInterval(timerIdPvP);
                 gameStartedPvP = false;

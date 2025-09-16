@@ -33,6 +33,25 @@ function createBoard() {
         }
     }
 }
+//
+function renderBoard(board) {
+    const boardDiv = document.getElementById("board");
+    const cellDivs = boardDiv.querySelectorAll(".cell");
+
+    for (let i = 0; i < N; i++) {
+        for (let j = 0; j < N; j++) {
+            const index = i * N + j;
+            const cellEl = cellDivs[index];
+
+            // reset
+            cellEl.textContent = "";
+            cellEl.style.background = "#fff";
+
+            // gọi renderCell để hiển thị quân cờ
+            renderCell(cellEl, board[i][j]);
+        }
+    }
+}
 
 // ================= XỬ LÝ CLICK =================
 function handleClick(cell, i, j) {
@@ -45,9 +64,9 @@ function handleClick(cell, i, j) {
 
     // Sau đó gọi server để xác nhận + AI đi
     $.ajax({
-        url: "/Game/Move",
+        url: "/GameWithAI/Move",
         type: "POST",
-        data: { row: i, col: j },
+        data: { row: i, col: j, player: currentPlayer },
         success: function (res) {
             if (res.success) {
                 // Đồng bộ lại board từ server (cập nhật cả nước đi AI)
