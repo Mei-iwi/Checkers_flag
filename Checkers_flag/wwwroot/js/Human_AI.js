@@ -1,6 +1,6 @@
 ﻿const N = 10;
 const cells = Array.from({ length: N }, () => Array(N).fill(0));
-let currentPlayer = 1; 
+let currentPlayer = 1;
 let gameStarted = false;
 
 const boardDiv = document.getElementById("board");
@@ -38,45 +38,49 @@ function createBoard() {
 function handleClick(cell, i, j) {
     if (!gameStarted) return;
     if (cells[i][j] !== 0) return;
-    // ===== AJAX gọi về server =====
+
+    // === Người chơi đánh ngay trên client ===
+    cells[i][j] = currentPlayer;
+    renderBoard(cells);
+
+    // Sau đó gọi server để xác nhận + AI đi
     $.ajax({
         url: "/Game/Move",
         type: "POST",
         data: { row: i, col: j },
         success: function (res) {
             if (res.success) {
+                // Đồng bộ lại board từ server (cập nhật cả nước đi AI)
                 for (let r = 0; r < N; r++) {
                     for (let c = 0; c < N; c++) {
                         cells[r][c] = res.board[r][c];
                     }
                 }
-
                 renderBoard(res.board);
 
                 currentPlayer = res.currentPlayer;
-
                 startTimer();
+
                 if (res.isWin) {
                     clearInterval(timerId);
                     gameStarted = false;
-
                     let winnerSymbol = res.winner === 1 ? "❌" : "O";
-
-                    // Hiện overlay
                     $("#winnerText").text("🎉 Người chơi " + winnerSymbol + " đã thắng!");
                     $("#overlay").fadeIn();
-
-                    //// Tắt khu vực board
-                    //$("#end").hide();
-                    //$("#board").removeClass("show");
-                    //$("#board").empty();
-                    //$("#start").show();
                 }
+            } else {
+                // rollback nếu server từ chối
+                cells[i][j] = 0;
+                renderBoard(cells);
+                alert("❌ Nước đi không hợp lệ!");
             }
         },
         error: function () {
+            // rollback khi lỗi server
+            //cells[i][j] = 0;
+            //renderBoard(cells);
             alert("❌ Lỗi Server");
-        },
+        }
     });
 }
 // ================= VẼ QUÂN CỜ =================
@@ -171,8 +175,7 @@ $("#endgame").click(function (e) {
     $("#CancelGame").text("Bạn có chắc muốn kết thúc trò chơi");
     $("#overlayCancel").fadeIn();
 
-    $("#btnReplayCancel").click(function (event)
-    {
+    $("#btnReplayCancel").click(function (event) {
         event.stopPropagation();
         $("#CancelGame").text("AI Thắng");
 
@@ -207,7 +210,7 @@ $("#endgame").click(function (e) {
 
 $("#btnReplay").click(function () {
     $("#overlay").fadeOut();
-    $("#btnStart").click(); 
+    $("#btnStart").click();
 });
 $("#btnEnd").click(function () {
     $("#overlay").fadeOut();
