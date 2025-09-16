@@ -38,7 +38,6 @@ function createBoard() {
 function handleClick(cell, i, j) {
     if (!gameStarted) return;
     if (cells[i][j] !== 0) return;
-
     // ===== AJAX gọi về server =====
     $.ajax({
         url: "/Game/Move",
