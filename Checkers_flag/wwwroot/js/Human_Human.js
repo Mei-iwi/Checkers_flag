@@ -44,7 +44,7 @@ function handleClickPvP(cell, i, j) {
         type: "POST",
         data: { row: i, col: j, player: currentPlayerPvP },
         success: function (res) {
-            if (res.success) {
+            if (res.success) {   
                 for (let r = 0; r < N_PvP; r++) {
                     for (let c = 0; c < N_PvP; c++) {
                         cellsPvP[r][c] = res.board[r][c];
