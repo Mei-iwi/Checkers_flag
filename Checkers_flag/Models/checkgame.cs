@@ -3,7 +3,20 @@
     public class checkgame
     {
         public int[,] a = new int[10, 10];
+        public checkgame()
+        {
+            a = new int[10, 10];
+        }
+        public checkgame(int[,] board)
+        {
+            int n = board.GetLength(0);
+            int m = board.GetLength(1);
+            a = new int[n, m];
 
+            for (int i = 0; i < n; i++)
+                for (int j = 0; j < m; j++)
+                    a[i, j] = board[i, j];
+        }
         public bool ktr(int i, int j, int giatri)
         {
             if (a[i, j] != giatri) return false;
@@ -21,7 +34,7 @@
             if (dem >= 5) return true;
             return false;
         }
-        public int demchuoi(int i , int j, int x, int y,int giatri)
+        public int demchuoi(int i, int j, int x, int y, int giatri)
         // x, y là hướng di chuyển trong ma trận
         {
             int dem = 0;

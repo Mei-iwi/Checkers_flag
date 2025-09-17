@@ -168,69 +168,78 @@ $("#btnStart").click(function (e) {
     currentPlayer = parseInt(selected);
     gameStarted = true;
 
-    createBoard();
-    document.getElementById("who").innerHTML =
-        "Lượt đi của: " +
-        (currentPlayer === 1
-            ? "❌"
-            : "<span style='color:blue;font-weight: bold;'>O</span>");
-    startTimer();
 
-    $("#start").hide();
-    $("#who").addClass("show");
+    $.get("/GameWithHuman/ResetGame", function (res) {
+        // Reset client theo server
+        for (let r = 0; r < N_PvP; r++) {
+            for (let c = 0; c < N_PvP; c++) {
+                cellsPvP[r][c] = res.board[r][c];
+            }
+        }
 
-    $("#end").show();
-    $("#end").css("display", "flex");
-    $("#board").addClass("show");
-});
+        createBoard();
+        document.getElementById("who").innerHTML =
+            "Lượt đi của: " +
+            (currentPlayer === 1
+                ? "❌"
+                : "<span style='color:blue;font-weight: bold;'>O</span>");
+        startTimer();
 
-// ================= NÚT ĐẦU HÀNG =================
-$("#endgame").click(function (e) {
-    e.stopPropagation();
-    //clearInterval(timerId);
-    gameStarted = false;
+        $("#start").hide();
+        $("#who").addClass("show");
 
-    // Hiện overlay
-    $("#CancelGame").text("Bạn có chắc muốn kết thúc trò chơi");
-    $("#overlayCancel").fadeIn();
+        $("#end").show();
+        $("#end").css("display", "flex");
+        $("#board").addClass("show");
+    });
 
-    $("#btnReplayCancel").click(function (event) {
-        event.stopPropagation();
-        $("#CancelGame").text("AI Thắng");
+    // ================= NÚT ĐẦU HÀNG =================
+    $("#endgame").click(function (e) {
+        e.stopPropagation();
+        //clearInterval(timerId);
+        gameStarted = false;
 
-        $("#btnReplayCancel").hide();
-        $("#btnEndGame").hide();
+        // Hiện overlay
+        $("#CancelGame").text("Bạn có chắc muốn kết thúc trò chơi");
+        $("#overlayCancel").fadeIn();
 
-        setTimeout(function () {
+        $("#btnReplayCancel").click(function (event) {
+            event.stopPropagation();
+            $("#CancelGame").text("AI Thắng");
 
+            $("#btnReplayCancel").hide();
+            $("#btnEndGame").hide();
+
+            setTimeout(function () {
+
+                $("#overlayCancel").fadeOut();
+
+                $("#board").removeClass("show").empty();
+                $("#end").hide();
+                $("#start").show();
+                $("#btnReplayCancel").show();
+                $("#btnEndGame").show();
+
+
+            }, 2000);
+
+        });
+        $("#btnEndGame").click(function () {
             $("#overlayCancel").fadeOut();
+            gameStarted = true;
+        });
 
-            $("#board").removeClass("show").empty();
-            $("#end").hide();
-            $("#start").show();
-            $("#btnReplayCancel").show();
-            $("#btnEndGame").show();
-
-
-        }, 2000);
-
-    });
-    $("#btnEndGame").click(function () {
-        $("#overlayCancel").fadeOut();
-        gameStarted = true;
+        // Tắt khu vực board
+        //$("#end").hide();
+        //$("#board").removeClass("show");
+        //$("#board").empty();
+        //$("#start").show();
     });
 
-    // Tắt khu vực board
-    //$("#end").hide();
-    //$("#board").removeClass("show");
-    //$("#board").empty();
-    //$("#start").show();
-});
-
-$("#btnReplay").click(function () {
-    $("#overlay").fadeOut();
-    $("#btnStart").click();
-});
-$("#btnEnd").click(function () {
-    $("#overlay").fadeOut();
-});
+    $("#btnReplay").click(function () {
+        $("#overlay").fadeOut();
+        $("#btnStart").click();
+    });
+    $("#btnEnd").click(function () {
+        $("#overlay").fadeOut();
+    });

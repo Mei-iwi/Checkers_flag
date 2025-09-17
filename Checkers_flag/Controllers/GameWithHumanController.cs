@@ -1,51 +1,85 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Checkers_flag.Models;
+using Microsoft.AspNetCore.Mvc;
 using System.Numerics;
 
 namespace Checkers_flag.Controllers
 {
     public class GameWithHumanController : Controller
     {
-        /*
-           Size = size;
-        Board = Enumerable.Range(0, Size)
-                          .Select(r => Enumerable.Repeat(0, Size).ToList())
+
+        private int[,] ToArray(List<List<int>> board)
+        {
+            int n = board.Count;
+            int m = board[0].Count;
+            var arr = new int[n, m];
+            for (int i = 0; i < n; i++)
+                for (int j = 0; j < m; j++)
+                    arr[i, j] = board[i][j];
+            return arr;
+        }
+
+        private static List<List<int>> Board = Enumerable.Range(0, 10)
+                          .Select(r => Enumerable.Repeat(0, 10).ToList())
                           .ToList();
-        
-         
-         Board = new List<List<int>>();
-            for (int i = 0; i < Size; i++)
+
+        static int CurrentPlayer = 1;
+
+        [HttpPost]
+        public JsonResult MoveHuman(int row, int col, int player)
+        {
+            // Nếu ô đã có giá trị thì từ chối
+            if (Board[row][col] != 0)
             {
-                var row = new List<int>();
-                for (int j = 0; j < Size; j++)
-                {
-                    row.Add(0); // mặc định tất cả ô = 0
-                }
-                Board.Add(row);
+                return Json(new { success = false, message = "Ô đã được đánh!" });
             }
-         */
-        //private static CaroGame game = new CaroGame(10);
 
-        //[HttpPost]
-        //public JsonResult MoveHuman(int row, int col, int player)
-        //{
+            // Đặt quân cờ vào bàn
+            Board[row][col] = player;
 
-        //    var result = game.Minimax(row, col, player);
+            // Kiểm tra thắng thua
+            var array = ToArray(Board);
+            var Win = new checkgame(array);
+            bool isWin = Win.ktr(row, col, player);
+            bool isDraw = !isWin && Board.All(r => r.All(c => c != 0));
 
-        //    return Json(new
-        //    {
-        //        success = result.success,
-        //        board = game.Board,
-        //        currentPlayer = game.CurrentPlayer,
-        //        isWin = result.isWin,
-        //        isDraw = result.isDraw,
-        //        winner = result.winner
-        //    });
-        //}
-        //[HttpGet]
-        //public JsonResult ResetGame()
-        //{
-        //    game = new CaroGame(10);
-        //    return Json(new { message = "Trận mới đã bắt đầu!", board = game.Board, currentPlayer = game.CurrentPlayer });
-        //}
+            int winner = isWin ? player : 0;
+
+            // Đổi lượt (chỉ khi chưa kết thúc game)
+            if (!isWin && !isDraw)
+            {
+                CurrentPlayer = (player == 1) ? 2 : 1;
+            }
+
+            return Json(new
+            {
+                success = true,
+                board = Board,
+                currentPlayer = CurrentPlayer,
+                isWin,
+                isDraw,
+                winner,
+                message = isWin ? $"Người chơi {player} thắng!" : isDraw ? "Hòa!" : $"Lượt tiếp theo: {(CurrentPlayer == 1 ? "X" : "O")}"
+            });
+        }
+
+        [HttpGet]
+        public JsonResult ResetGame()
+        {
+            Board.Clear();
+            Board = Enumerable.Range(0, 10)
+                              .Select(r => Enumerable.Repeat(0, 10).ToList())
+                              .ToList();
+            CurrentPlayer = 1;
+
+
+
+            return Json(new
+            {
+                message = "Trận mới đã bắt đầu!",
+                board = Board,
+                currentPlayer = CurrentPlayer
+            });
+        }
+
     }
 }
