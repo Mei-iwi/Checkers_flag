@@ -39,39 +39,65 @@ function handleClickPvP(cell, i, j) {
     if (!gameStartedPvP) return;
     if (cellsPvP[i][j] !== 0) return;
 
+    // === Người chơi đánh ngay trên client ===
+    cellsPvP[i][j] = currentPlayerPvP;
+    renderBoardPvP(cellsPvP);
+
     $.ajax({
-        url: "/Game/MoveHuman", 
+        url: "/GameWithHuman/MoveHuman",  // Controller = GameWithHuman, Action = MoveHuman
         type: "POST",
         data: { row: i, col: j, player: currentPlayerPvP },
         success: function (res) {
+<<<<<<< HEAD
             if (res.success) {   
                 for (let r = 0; r < N_PvP; r++) {
                     for (let c = 0; c < N_PvP; c++) {
                         cellsPvP[r][c] = res.board[r][c];
                     }
+=======
+            if (!res.success) return;
+
+            // Cập nhật lại bàn cờ từ server
+            for (let r = 0; r < N_PvP; r++) {
+                for (let c = 0; c < N_PvP; c++) {
+                    cellsPvP[r][c] = res.board[r][c];
+>>>>>>> c7e97427211bf33a105b4acb3af176fb44664858
                 }
+            }
 
-                renderBoardPvP(res.board);
+            renderBoardPvP(res.board);
 
-                currentPlayerPvP = res.currentPlayer;
+            // Cập nhật lượt đi
+            currentPlayerPvP = res.currentPlayer;
+            document.getElementById("who").innerHTML =
+                "Lượt đi của: " +
+                (currentPlayerPvP === 1
+                    ? "❌"
+                    : "<span style='color:blue;font-weight: bold;'>O</span>");
 
-                document.getElementById("who").innerHTML =
-                    "Lượt đi của: " +
-                    (currentPlayerPvP === 1
+            // Reset & bắt đầu lại timer cho người chơi mới
+            startTimerPvP();
+
+            // Xử lý thắng
+            if (res.isWin) {
+                clearInterval(timerIdPvP);
+                gameStartedPvP = false;
+
+                let winnerSymbol =
+                    res.winner === 1
                         ? "❌"
-                        : "<span style='color:blue;font-weight: bold;'>O</span>");
+                        : "<span style='color:blue;font-weight:bold;'>O</span>";
 
-                startTimerPvP();
+                $("#winnerText").html("🎉 Người chơi " + winnerSymbol + " đã thắng!");
+                $("#overlay").fadeIn();
+            }
+            // Xử lý hòa
+            else if (res.isDraw) {
+                clearInterval(timerIdPvP);
+                gameStartedPvP = false;
 
-                if (res.isWin) {
-                    clearInterval(timerIdPvP);
-                    gameStartedPvP = false;
-
-                    let winnerSymbol = res.winner === 1 ? "❌" : "O";
-
-                    $("#winnerText").text("🎉 Người chơi " + winnerSymbol + " đã thắng!");
-                    $("#overlay").fadeIn();
-                }
+                $("#winnerText").text("🤝 Trận đấu hòa!");
+                $("#overlay").fadeIn();
             }
         },
         error: function () {
@@ -79,7 +105,6 @@ function handleClickPvP(cell, i, j) {
         },
     });
 }
-
 // ================= VẼ QUÂN CỜ =================
 function renderCellPvP(el, val) {
     if (val === 1) {

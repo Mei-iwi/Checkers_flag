@@ -1,4 +1,4 @@
-using Checkers_flag.Models;
+﻿using Checkers_flag.Models;
 using Microsoft.AspNetCore.Mvc;
 using System.Diagnostics;
 
@@ -21,6 +21,7 @@ namespace Checkers_flag.Controllers
         {
             return View();
         }
+      
         public IActionResult withHuman()
         {
             return View();
