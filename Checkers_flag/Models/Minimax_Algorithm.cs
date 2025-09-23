@@ -9,6 +9,9 @@
             if (ktr(I, J, 2)) return -1; // Người chơi thắng
             return 0; // Hòa
         }
+
+        //cách tính điểm cho thuật toán minimax
+        
         public int minimax(List<int> game_tree, int tang, Boolean AIchoi, int x, int y, out int tdi, out int tdj)
         {
             // kiều kiện dừng
