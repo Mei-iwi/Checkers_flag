@@ -1,6 +1,6 @@
 ﻿namespace Checkers_flag.Models
 {
-    public class Minimax_Algorithm : checkgame
+    public class Minimax_Algorithm : Checkgame
     {
         //Code for Minimax Algorithm will go here
         public int dk_dung(int I, int J)

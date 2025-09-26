@@ -38,7 +38,7 @@ namespace Checkers_flag.Controllers
 
             // Kiểm tra thắng thua
             var array = ToArray(Board);
-            var Win = new checkgame(array);
+            var Win = new Checkgame(array);
             bool isWin = Win.ktr(row, col, player);
             bool isDraw = !isWin && Board.All(r => r.All(c => c != 0));
 
