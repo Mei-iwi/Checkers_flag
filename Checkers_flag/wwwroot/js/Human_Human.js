@@ -40,7 +40,7 @@ function handleClickPvP(cell, i, j) {
     if (cellsPvP[i][j] !== 0) return;
 
     $.ajax({
-        url: "/GameWithHuman/MoveHuman",  // Controller = GameWithHuman, Action = MoveHuman
+        url: "/GameWithHuman/MoveHuman",
         type: "POST",
         data: { row: i, col: j, player: currentPlayerPvP },
         dataType: "json",
@@ -63,6 +63,8 @@ function handleClickPvP(cell, i, j) {
                     (currentPlayerPvP === 1
                         ? "❌"
                         : "<span style='color:blue;font-weight: bold;'>O</span>");
+
+
 
                 // Reset & bắt đầu lại timer cho người chơi mới
                 startTimerPvP();
