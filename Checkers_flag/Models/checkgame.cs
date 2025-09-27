@@ -1,13 +1,13 @@
 ﻿namespace Checkers_flag.Models
 {
-    public class checkgame
+    public class Checkgame
     {
         public int[,] a = new int[10, 10];
-        public checkgame()
+        public Checkgame()
         {
             a = new int[10, 10];
         }
-        public checkgame(int[,] board)
+        public Checkgame(int[,] board)
         {
             int n = board.GetLength(0);
             int m = board.GetLength(1);
