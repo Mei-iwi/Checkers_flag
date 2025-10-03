@@ -10,10 +10,20 @@
         cursor: pointer;
         transition: all 0.4s ease-in-out;
     }
+
+    #selectOption{
+        display:flex;
+        gap: 30px;
+    }
+    .select{
+        background:white;
+        width:100px;
+    }
     #outGame:hover {
         background-color: #0056b3;
         transform: scale(1.1);
     }
+
 </style>
 <div class="container">
     <div class="background-board">
@@ -22,14 +32,15 @@
         <!-- Khu vực chọn lượt và nút Start -->
         <div class="mb-2 text-center" id="start">
             <div id="selectOption">
-                <label class="mr-3 text-light">Chọn người đi trước:</label>
+                <label class="mr-3 text-light">Chọn lượt đi trước:</label>
                 <div class="group-select">
                     <input type="radio" name="firstPlayer" value="1" checked />
-                    <span class="text-danger select">❌</span>
+                    <span class="text-danger select w-100">Người ❌</span>
+                  
                 </div>
                 <div class="group-select">
                     <input type="radio" name="firstPlayer" value="2" />
-                    <span class="text-primary select">O</span>
+                    <span class="text-primary select w-100">Máy O</span>
                 </div>
             </div>
 
@@ -38,7 +49,7 @@
                     Quay lại
                 </button>
                 <button id="btnStart" class="btn btn-success btn-sm ml-3">
-                    CHƠI VỚI MÁY
+                   BẮT ĐẦU CHƠI
                 </button>
             </div>
         </div>
@@ -48,7 +59,7 @@
 
         <!-- Thanh trạng thái -->
         <div id="end" style="display:none; gap:10px; margin-top:10px;">
-            <span id="endgame" class="alert btn btn-danger">Đầu hàng</span>
+            <span id="endgame" class="alert btn btn-danger mt-3">Đầu hàng</span>
             <span id="time" class="alert alert-primary">Time</span>
             <span id="who" class="alert alert-success"></span>
         </div>

@@ -1,10 +1,9 @@
 ﻿const N = 10;
 const cells = Array.from({ length: N }, () => Array(N).fill(0));
-let currentPlayer = 1;
+let currentPlayer = 1; // 1: người, 2: AI
 let gameStarted = false;
 
 const boardDiv = document.getElementById("board");
-
 let timeLeft = 10;
 let timerId = null;
 
@@ -33,76 +32,83 @@ function createBoard() {
         }
     }
 }
-//
-function renderBoard(board) {
-    const boardDiv = document.getElementById("board");
-    const cellDivs = boardDiv.querySelectorAll(".cell");
 
+// ================= RENDER BÀN =================
+function renderBoard(board, lastMove = null) {
+    const cellDivs = boardDiv.querySelectorAll(".cell");
     for (let i = 0; i < N; i++) {
         for (let j = 0; j < N; j++) {
             const index = i * N + j;
             const cellEl = cellDivs[index];
+            if (!cellEl) continue;
 
-            // reset
             cellEl.textContent = "";
             cellEl.style.background = "#fff";
-
-            // gọi renderCell để hiển thị quân cờ
             renderCell(cellEl, board[i][j]);
+
+            if (lastMove && lastMove.row === i && lastMove.col === j)
+                cellEl.style.background = "#ffff99";
         }
     }
 }
 
-// ================= XỬ LÝ CLICK =================
+// ================= CLICK =================
 function handleClick(cell, i, j) {
-    if (!gameStarted) return;
-    if (cells[i][j] !== 0) return;
+    if (!gameStarted || cells[i][j] !== 0 || currentPlayer !== 1) return;
 
-    // === Người chơi đánh ngay trên client ===
-    cells[i][j] = currentPlayer;
-    renderBoard(cells);
+    console.log(`Người chơi click: (${i}, ${j})`);
 
-    // Sau đó gọi server để xác nhận + AI đi
-    $.ajax({
-        url: "/GameWithAI/Move",
-        type: "POST",
-        data: { row: i, col: j, player: currentPlayer },
-        success: function (res) {
-            if (res.success) {
-                // Đồng bộ lại board từ server (cập nhật cả nước đi AI)
-                for (let r = 0; r < N; r++) {
-                    for (let c = 0; c < N; c++) {
-                        cells[r][c] = res.board[r][c];
-                    }
-                }
-                renderBoard(res.board);
+    $.post("/GameWithAI/Move", { row: i, col: j }, function (res) {
+        if (!res.success) { alert(res.message); return; }
 
-                currentPlayer = res.currentPlayer;
-                startTimer();
-
-                if (res.isWin) {
-                    clearInterval(timerId);
-                    gameStarted = false;
-                    let winnerSymbol = res.winner === 1 ? "❌" : "O";
-                    $("#winnerText").text("🎉 Người chơi " + winnerSymbol + " đã thắng!");
-                    $("#overlay").fadeIn();
-                }
-            } else {
-                // rollback nếu server từ chối
-                cells[i][j] = 0;
-                renderBoard(cells);
-                alert("❌ Nước đi không hợp lệ!");
+        // Cập nhật toàn bộ cells từ server
+        // Chỉ cập nhật các ô mà server khác 0, tránh ghi đè nước đi AI client
+        for (let r = 0; r < N; r++) {
+            for (let c = 0; c < N; c++) {
+                if (res.board[r][c] !== 0) cells[r][c] = res.board[r][c];
             }
-        },
-        error: function () {
-            // rollback khi lỗi server
-            //cells[i][j] = 0;
-            //renderBoard(cells);
-            alert("❌ Lỗi Server");
+        }
+
+        // Render nước đi của người chơi
+        renderBoard(cells, { row: i, col: j });
+        currentPlayer = res.currentPlayer;
+
+        if (res.isWin || res.isDraw) {
+            clearInterval(timerId);
+            gameStarted = false;
+            const msg = res.isWin
+                ? `🎉 Người chơi ${res.winner === 1 ? "❌" : "O"} thắng!`
+                : "🤝 Hòa!";
+            console.log(msg);
+            $("#winnerText").text(msg);
+            $("#overlay").fadeIn();
+        } else if (res.lastMove) {
+            // AI đi nước tiếp theo
+            AIPlay(res.lastMove);
+        } else {
+            document.getElementById("who").innerHTML = "Lượt đi của: ❌";
+            startTimer();
         }
     });
 }
-// ================= VẼ QUÂN CỜ =================
+
+// ================= AI ĐÁNH =================
+function AIPlay(lastMove) {
+    if (!lastMove) return;
+
+    // Cập nhật cells cho nước đi AI
+    cells[lastMove.row][lastMove.col] = 2;
+
+    // Render toàn bộ bàn và đánh dấu nước đi AI
+    renderBoard(cells, lastMove);
+
+    // Chuyển lượt sang người chơi
+    currentPlayer = 1;
+    document.getElementById("who").innerHTML = "Lượt đi của: ❌";
+    startTimer();
+}
+
+// ================= VẼ QUÂN =================
 function renderCell(el, val) {
     if (val === 1) {
         el.textContent = "❌";
@@ -122,124 +128,105 @@ function renderCell(el, val) {
 // ================= TIMER =================
 function startTimer() {
     clearInterval(timerId);
-    timeLeft = 11;
-    //$("#time").text("Time: " + timeLeft + " s");
-
+    timeLeft = 10;
     timerId = setInterval(() => {
         timeLeft--;
-        if (timeLeft < 4) {
-            $("#time")
-                .removeClass("alert-primary alert-warning")
-                .addClass("alert-danger");
-        } else if (timeLeft < 6) {
-            $("#time")
-                .removeClass("alert-primary alert-danger")
-                .addClass("alert-warning");
-        } else if (timeLeft <= 10) {
-            $("#time")
-                .removeClass("alert-warning alert-danger")
-                .addClass("alert-primary");
-        }
-        if (timeLeft == 0) {
-            setTimeout(() => {
-                $("#time").text("Đổi lượt");
-            }, 200);
-        }
         $("#time").text("Time: " + timeLeft + " s");
 
         if (timeLeft <= 0) {
             clearInterval(timerId);
 
-            currentPlayer = currentPlayer === 1 ? 2 : 1;
-            document.getElementById("who").innerHTML =
-                "Lượt đi của: " +
-                (currentPlayer === 1
-                    ? "❌"
-                    : "<span style='color:blue;font-weight: bold;'>O</span>");
-            startTimer();
+            if (currentPlayer === 1) {
+                // Hết giờ người chơi → AI đi
+                const move = getRandomAIMove(cells);
+                if (move) AIPlay(move);
+            } else {
+                // Hết giờ AI → chuyển lượt sang người chơi
+                currentPlayer = 1;
+                document.getElementById("who").innerHTML = "Lượt đi của: ❌";
+                startTimer();
+            }
         }
     }, 1000);
 }
-
-// ================= NÚT BẮT ĐẦU =================
+// ================= BẮT ĐẦU GAME =================
 $("#btnStart").click(function (e) {
     e.stopPropagation();
     const selected = $('input[name="firstPlayer"]:checked').val();
     currentPlayer = parseInt(selected);
-    gameStarted = true;
+    console.log("Game bắt đầu, người đi trước: " + currentPlayer);
 
+    $.get("/GameWithAI/ResetGame?firstPlayer=" + currentPlayer, function (res) {
+        if (res.success) {
+            // Cập nhật cells từ server
+            for (let r = 0; r < N; r++)
+                for (let c = 0; c < N; c++)
+                    cells[r][c] = res.board[r][c];
 
-    $.get("/GameWithHuman/ResetGame", function (res) {
-        // Reset client theo server
-        for (let r = 0; r < N_PvP; r++) {
-            for (let c = 0; c < N_PvP; c++) {
-                cellsPvP[r][c] = res.board[r][c];
+            createBoard();
+
+            // Nếu AI đi trước, chọn nước đi ngẫu nhiên tại client
+            if (currentPlayer === 2) {
+                const move = getRandomAIMove(cells);
+                if (move) {
+                    cells[move.row][move.col] = 2;
+                    renderBoard(cells, move);
+                }
+                currentPlayer = 1;
+                document.getElementById("who").innerHTML = "Lượt đi của: ❌";
+                startTimer();
             }
-        }
-
-        createBoard();
-        document.getElementById("who").innerHTML =
-            "Lượt đi của: " +
-            (currentPlayer === 1
-                ? "❌"
-                : "<span style='color:blue;font-weight: bold;'>O</span>");
-        startTimer();
-
-        $("#start").hide();
-        $("#who").addClass("show");
-
-        $("#end").show();
-        $("#end").css("display", "flex");
-        $("#board").addClass("show");
-    });
-
-    // ================= NÚT ĐẦU HÀNG =================
-    $("#endgame").click(function (e) {
-        e.stopPropagation();
-        //clearInterval(timerId);
-        gameStarted = false;
-
-        // Hiện overlay
-        $("#CancelGame").text("Bạn có chắc muốn kết thúc trò chơi");
-        $("#overlayCancel").fadeIn();
-
-        $("#btnReplayCancel").click(function (event) {
-            event.stopPropagation();
-            $("#CancelGame").text("AI Thắng");
-
-            $("#btnReplayCancel").hide();
-            $("#btnEndGame").hide();
-
-            setTimeout(function () {
-
-                $("#overlayCancel").fadeOut();
-
-                $("#board").removeClass("show").empty();
-                $("#end").hide();
-                $("#start").show();
-                $("#btnReplayCancel").show();
-                $("#btnEndGame").show();
 
 
-            }, 2000);
-
-        });
-        $("#btnEndGame").click(function () {
-            $("#overlayCancel").fadeOut();
             gameStarted = true;
-        });
-
-        // Tắt khu vực board
-        //$("#end").hide();
-        //$("#board").removeClass("show");
-        //$("#board").empty();
-        //$("#start").show();
+            $("#start").hide();
+            $("#who").addClass("show");
+            $("#end").show();
+            $("#board").addClass("show");
+        }
     });
+});
 
-    $("#btnReplay").click(function () {
-        $("#overlay").fadeOut();
+// ================= RANDOM AI =================
+function getRandomAIMove(board) {
+    const emptyCells = [];
+    for (let i = 0; i < N; i++) {
+        for (let j = 0; j < N; j++) {
+            if (board[i][j] === 0) emptyCells.push({ row: i, col: j });
+        }
+    }
+    if (emptyCells.length === 0) return null;
+    const index = Math.floor(Math.random() * emptyCells.length);
+    return emptyCells[index];
+
+}// ================= KẾT THÚC / CHƠI LẠI =================
+$("#endgame").click(function (e) {
+    e.stopPropagation();
+    gameStarted = false;
+    $("#CancelGame").text("Bạn có chắc muốn kết thúc trò chơi?");
+    $("#overlayCancel").fadeIn();
+
+    $("#btnReplayCancel").click(function (event) {
+        event.stopPropagation();
+        $("#CancelGame").text("AI Thắng");
+        setTimeout(function () {
+
+        $("#overlayCancel").fadeOut();
         $("#btnStart").click();
+            window.location.reload();
+        },1000);
     });
-    $("#btnEnd").click(function () {
-        $("#overlay").fadeOut();
+    $("#btnEndGame").click(function () {
+        $("#overlayCancel").fadeOut();
+        gameStarted = true;
     });
+});
+
+$("#btnReplay").click(function () {
+    $("#overlay").fadeOut();
+    $("#btnStart").click();
+});
+$("#btnEnd").click(function () {
+    $("#overlay").fadeOut();
+    location.href = "/";
+});
