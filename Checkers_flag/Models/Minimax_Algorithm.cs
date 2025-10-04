@@ -63,29 +63,109 @@ namespace Checkers_flag.Models
             return score;
         }
 
+
+
+        #region Tạm bỏ qua
         // ==================== 3. Đánh giá 1 ô ====================
 
         // Đánh giá điểm của ô (row, col) nếu đặt quân của 'player' vào đó 
         // Trước: int EvaluateCell(int row, int col, int player)
+        //public int EvaluateCell(int row, int col, int player)
+        //{
+        //    int score = 0;
+        //    int opponent = player == 1 ? 2 : 1;
+
+        //    // Tấn công: giữ nguyên hoặc tăng nhẹ nếu muốn AI ưu tiên tấn công
+        //    score += CountLine(row, col, player, 2) * 10;
+        //    score += CountLine(row, col, player, 3) * 50;
+        //    score += CountLine(row, col, player, 4) * 200;
+        //    score += CountLine(row, col, player, 5) * 1000;
+
+        //    // Phòng thủ: giảm mức trừ xuống trung bình để Minimax quyết định tốt hơn
+        //    score -= CountLine(row, col, opponent, 2) * 20;
+        //    score -= CountLine(row, col, opponent, 3) * 100;
+        //    score -= CountLine(row, col, opponent, 4) * 500;
+        //    score -= CountLine(row, col, opponent, 5) * 2000;
+
+        //    return score;
+        //}
+
+        #endregion
+
+
+        // ==================== 3. Đánh giá 1 ô (nâng cao) ====================
         public int EvaluateCell(int row, int col, int player)
         {
             int score = 0;
             int opponent = player == 1 ? 2 : 1;
 
-            // Tấn công: giữ nguyên hoặc tăng nhẹ nếu muốn AI ưu tiên tấn công
-            score += CountLine(row, col, player, 2) * 10;
-            score += CountLine(row, col, player, 3) * 50;
-            score += CountLine(row, col, player, 4) * 200;
-            score += CountLine(row, col, player, 5) * 1000;
+            // Tính điểm cho 4 hướng: ngang, dọc, chéo chính, chéo phụ
+            var directions = new (int dx, int dy)[] { (0, 1), (1, 0), (1, 1), (1, -1) };
 
-            // Phòng thủ: giảm mức trừ xuống trung bình để Minimax quyết định tốt hơn
-            score -= CountLine(row, col, opponent, 2) * 20;
-            score -= CountLine(row, col, opponent, 3) * 100;
-            score -= CountLine(row, col, opponent, 4) * 500;
-            score -= CountLine(row, col, opponent, 5) * 2000;
+            foreach (var (dx, dy) in directions)
+            {
+                var attackInfo = CountLineAdvanced(row, col, player, dx, dy);
+                score += attackInfo;
+
+                var defenseInfo = CountLineAdvanced(row, col, opponent, dx, dy);
+                score -= defenseInfo;
+            }
+
+            // DOUBLE-THREAT
+            int attackThreats = CountThreats(row, col, player);
+            if (attackThreats >= 2) score += 10000;
+
+            int defenseThreats = CountThreats(row, col, opponent);
+            if (defenseThreats >= 2) score += 5000;
 
             return score;
         }
+
+        // Hàm đếm chuỗi nâng cao theo hướng dx, dy
+        private int CountLineAdvanced(int row, int col, int player, int dx, int dy)
+        {
+            int count = 1; // tính cả ô hiện tại
+            int openEnds = 0;
+            int N = a.GetLength(0);
+
+            // Kiểm tra 1 hướng
+            int r = row + dx, c = col + dy;
+            while (IsValid(r, c) && a[r, c] == player) { count++; r += dx; c += dy; }
+            if (IsValid(r, c) && a[r, c] == 0) openEnds++;
+
+            // Kiểm tra hướng ngược lại
+            r = row - dx; c = col - dy;
+            while (IsValid(r, c) && a[r, c] == player) { count++; r -= dx; c -= dy; }
+            if (IsValid(r, c) && a[r, c] == 0) openEnds++;
+
+            int score = 0;
+            switch (count)
+            {
+                case 2: score = openEnds == 2 ? 20 : 10; break;
+                case 3: score = openEnds == 2 ? 100 : 50; break;
+                case 4: score = openEnds == 2 ? 500 : 200; break;
+                case 5: score = 10000; break; // thắng ngay
+                default: score = count > 5 ? 10000 : 0; break;
+            }
+            return score;
+        }
+
+        // Kiểm tra nước đi có hợp lệ
+        private bool IsValid(int r, int c) => r >= 0 && r < a.GetLength(0) && c >= 0 && c < a.GetLength(1);
+
+        // Đếm số chuỗi gần thắng (threats) cho double-threat
+        private int CountThreats(int row, int col, int player)
+        {
+            int threats = 0;
+            var directions = new (int dx, int dy)[] { (0, 1), (1, 0), (1, 1), (1, -1) };
+            foreach (var (dx, dy) in directions)
+            {
+                int val = CountLineAdvanced(row, col, player, dx, dy);
+                if (val >= 500) threats++; // chuỗi mở 2 đầu hoặc gần thắng
+            }
+            return threats;
+        }
+
 
 
         // Kiểm tra nếu đặt quân tại (row, col) sẽ khiến 'player' thắng với chuỗi dài 'length'
