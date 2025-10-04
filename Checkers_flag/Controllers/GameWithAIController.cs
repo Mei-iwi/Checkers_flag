@@ -67,31 +67,28 @@ namespace Checkers_flag.Controllers
         [HttpPost]
         public IActionResult Move([FromForm] int row, [FromForm] int col)
         {
-            // ================== 1. Kiểm tra nước đi của người chơi ==================
+            int N = board.GetLength(0);
 
-            // Nước đi hợp lệ: nằm trong bàn cờ 10x10 và ô trống
-            if (row < 0 || row >= 10 || col < 0 || col >= 10 || board[row, col] != 0)
+            // ================== 1. KIỂM TRA NƯỚC ĐI CỦA NGƯỜI ==================
+            if (row < 0 || row >= N || col < 0 || col >= N || board[row, col] != 0)
                 return Json(new { success = false, message = "Ô không hợp lệ!" });
 
-            // Kiểm tra lượt đi
             if (currentPlayer != 1)
                 return Json(new { success = false, message = "Không phải lượt người chơi!" });
 
-            // Cập nhật bàn cờ với nước đi của người chơi
-            board[row, col] = 1;
-
-            // Khởi tạo đối tượng Checkgame để kiểm tra thắng/hòa
+            board[row, col] = 1; // Cập nhật bàn cờ
             var check = new Checkgame(board);
 
             // Kiểm tra người chơi thắng
             if (check.ktr(row, col, 1))
                 return Json(new
                 {
-                    success = true,                    // Ajax gọi API thành công
-                    currentPlayer = 0,                 // Kết thúc lượt
-                    isWin = true,                      // Người chơi thắng
+                    success = true,
+                    board = ToJagged(board),
+                    currentPlayer = 0,
+                    isWin = true,
                     winner = 1,
-                    lastMove = new { row, col },       // Nước đi cuối của người chơi
+                    lastMove = new { row, col },
                     message = "Người chơi thắng!"
                 });
 
@@ -100,6 +97,7 @@ namespace Checkers_flag.Controllers
                 return Json(new
                 {
                     success = true,
+                    board = ToJagged(board),
                     currentPlayer = 0,
                     isDraw = true,
                     winner = 0,
@@ -107,90 +105,96 @@ namespace Checkers_flag.Controllers
                     message = "Hòa!"
                 });
 
-            // ================== 2. AI đi ==================
-
-            // Gán board hiện tại cho AI tính toán
+            // ================== 2. AI ĐI ==================
             minimaxAI.a = board;
+            int aiRow = -1, aiCol = -1;
+            object lastMoveAI = null;
 
-            int aiRow = -1, aiCol = -1;    // Vị trí nước đi của AI
-            object lastMoveAI = null;       // Lưu nước đi cuối của AI
+            var attackMoves = new List<(int i, int j, int score)>();
+            var defenseMoves = new List<(int i, int j, int score)>();
 
-            // Tìm các nước đi nguy hiểm (chặn người chơi thắng)
-            var dangerousMoves = new List<(int i, int j, int threatLength)>();
-            int N = board.GetLength(0);
             for (int i = 0; i < N; i++)
             {
                 for (int j = 0; j < N; j++)
                 {
-                    if (board[i, j] == 0)
-                    {
-                        for (int len = 5; len >= 3; len--)
-                        {
-                            // Nếu người chơi sắp thắng với chuỗi len, thêm vào danh sách mối đe dọa
-                            if (minimaxAI.IsPlayerAboutToWin(i, j, 1, len))
-                            {
-                                dangerousMoves.Add((i, j, len));
-                                break; // chỉ cần độ dài nguy hiểm lớn nhất
-                            }
-                        }
-                    }
+                    if (board[i, j] != 0) continue;
+
+                    int attackScore = minimaxAI.EvaluateCell(i, j, 2);
+                    if (attackScore > 0) attackMoves.Add((i, j, attackScore));
+
+                    int defenseScore = minimaxAI.EvaluateCell(i, j, 1);
+                    if (defenseScore > 0) defenseMoves.Add((i, j, defenseScore));
                 }
             }
 
-            // Nếu tồn tại nước đi nguy hiểm -> chặn ngay
-            if (dangerousMoves.Count > 0)
+            // ================== 3. QUYẾT ĐỊNH NƯỚC ĐI ==================
+            if (attackMoves.Count > 0)
             {
-                // Lấy nước đi có độ nguy hiểm lớn nhất
-                var best = dangerousMoves.OrderByDescending(x => x.threatLength).First();
-                aiRow = best.i; aiCol = best.j;
-            }
-            else
-            {
-                // Không có mối nguy hiểm -> dùng thuật toán Minimax để tìm nước đi tối ưu
-                minimaxAI.minimax(5, true, int.MinValue, int.MaxValue, out aiRow, out aiCol);
+                var bestAttack = attackMoves.OrderByDescending(x => x.score).First();
+                aiRow = bestAttack.i; aiCol = bestAttack.j;
             }
 
-            // Thực hiện nước đi của AI nếu hợp lệ
+            if (defenseMoves.Count > 0)
+            {
+                var bestDefense = defenseMoves.OrderByDescending(x => x.score).First();
+                int maxAttack = attackMoves.Count > 0 ? attackMoves.Max(x => x.score) : 0;
+
+                if (bestDefense.score >= maxAttack)
+                {
+                    aiRow = bestDefense.i; aiCol = bestDefense.j;
+                }
+            }
+
+            if (aiRow == -1 || aiCol == -1)
+            {
+                minimaxAI.minimax(6, true, int.MinValue, int.MaxValue, out aiRow, out aiCol);
+            }
+
             if (aiRow >= 0 && aiCol >= 0)
             {
                 board[aiRow, aiCol] = 2;
                 lastMoveAI = new { row = aiRow, col = aiCol };
             }
 
-            // Kiểm tra AI thắng
-            check = new Checkgame(board);
-            if (check.ktr(aiRow, aiCol, 2))
-                return Json(new
-                {
-                    success = true,
-                    currentPlayer = 0,        // Kết thúc lượt
-                    isWin = true,              // AI thắng
-                    winner = 2,
-                    lastMove = lastMoveAI,     // Nước đi cuối của AI
-                    message = "AI thắng!"
-                });
+            // ================== 4. KIỂM TRA AI THẮNG/HÒA ==================
+            if (lastMoveAI != null)
+            {
+                var move = (dynamic)lastMoveAI;
+                check = new Checkgame(board);
 
-            // Kiểm tra hòa sau nước đi AI
-            if (board.Cast<int>().All(x => x != 0))
-                return Json(new
-                {
-                    success = true,
-                    currentPlayer = 0,
-                    isDraw = true,
-                    winner = 0,
-                    lastMove = lastMoveAI,
-                    message = "Hòa!"
-                });
+                if (check.ktr(move.row, move.col, 2))
+                    return Json(new
+                    {
+                        success = true,
+                        board = ToJagged(board),
+                        currentPlayer = 0,
+                        isWin = true,
+                        winner = 2,
+                        lastMove = lastMoveAI,
+                        message = "AI thắng!"
+                    });
 
-            // ================== 3. Trả quyền lại cho người chơi ==================
+                if (board.Cast<int>().All(x => x != 0))
+                    return Json(new
+                    {
+                        success = true,
+                        board = ToJagged(board),
+                        currentPlayer = 0,
+                        isDraw = true,
+                        winner = 0,
+                        lastMove = lastMoveAI,
+                        message = "Hòa!"
+                    });
+            }
+
+            // ================== 5. TRẢ QUYỀN CHO NGƯỜI ==================
             currentPlayer = 1;
-
-            // Trả JSON với nước đi AI và lượt tiếp theo cho người chơi
             return Json(new
             {
                 success = true,
-                currentPlayer = currentPlayer,
-                lastMove = lastMoveAI,   // Nước đi cuối của AI
+                board = ToJagged(board),
+                currentPlayer,
+                lastMove = lastMoveAI,
                 isWin = false,
                 isDraw = false,
                 winner = 0
@@ -268,3 +272,4 @@ ToJagged:
 
     Chuyển đổi ma trận [,] sang jagged array [][] để có thể serialize sang JSON dễ dàng.
  */
+

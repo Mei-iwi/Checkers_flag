@@ -135,15 +135,23 @@ function updateBoardFromServer(res) {
     if (res.lastMove) {
         const { row, col } = res.lastMove;
 
-        // Gán nước đi dựa trên lượt đi thực tế của lastMove
-        // Nếu lượt trước là AI, gán 2; nếu người, gán 1
-        const value = (res.currentPlayer === 1) ? 2 : 1; // currentPlayer từ server là lượt tiếp theo
+        // Xác định nước đi cuối là của ai
+        let value = 0;
+        if (res.isWin || res.isDraw) {
+            // Nếu AI thắng hoặc người thắng, lấy winner
+            value = res.winner;
+        } else {
+            // Nếu chưa thắng, nước đi cuối luôn là AI vì người đi trước đã render
+            value = 2;
+        }
+
         cells[row][col] = value;
 
         // Render lại bàn với highlight nước đi cuối
         renderBoard(cells, res.lastMove);
     }
 }
+
 
 // ================== TIMER ==================
 // Bắt đầu countdown mỗi lượt 30s
@@ -210,7 +218,7 @@ $("#btnStart").click(function (e) {
 
     $.get("/GameWithAI/ResetGame?firstPlayer=" + currentPlayer, function (res) {
         if (!res.success) return;
-
+        resetBoard() 
         createBoard();
 
         if (res.lastMove && currentPlayer === 2) {
@@ -295,4 +303,26 @@ function getRandomAIMove(board) {
     }
     if (available.length === 0) return null;
     return available[Math.floor(Math.random() * available.length)];
+}
+function resetBoard() {
+    // 1. Reset mảng lưu trạng thái bàn cờ
+    for (let i = 0; i < N; i++) {
+        for (let j = 0; j < N; j++) {
+            cells[i][j] = 0;
+        }
+    }
+
+    // 2. Xóa DOM bàn cờ
+    boardDiv.innerHTML = "";
+
+    // 3. Reset các biến trạng thái
+    currentPlayer = 1;   // mặc định người đi trước
+    gameStarted = false;
+    isAITurn = false;
+    clearInterval(timerId);
+    timeLeft = 30;
+
+    // 4. Reset hiển thị timer và lượt chơi
+    $("#time").text("Time: 30 s");
+    $("#who").text("Lượt đi hiện tại: ❌ (Người)");
 }

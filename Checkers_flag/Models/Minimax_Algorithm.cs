@@ -64,27 +64,29 @@ namespace Checkers_flag.Models
         }
 
         // ==================== 3. Đánh giá 1 ô ====================
-            
+
         // Đánh giá điểm của ô (row, col) nếu đặt quân của 'player' vào đó 
-        int EvaluateCell(int row, int col, int player)
+        // Trước: int EvaluateCell(int row, int col, int player)
+        public int EvaluateCell(int row, int col, int player)
         {
             int score = 0;
             int opponent = player == 1 ? 2 : 1;
 
-            // Tấn công (Tối đa chiến thắng) 
+            // Tấn công: giữ nguyên hoặc tăng nhẹ nếu muốn AI ưu tiên tấn công
             score += CountLine(row, col, player, 2) * 10;
             score += CountLine(row, col, player, 3) * 50;
             score += CountLine(row, col, player, 4) * 200;
             score += CountLine(row, col, player, 5) * 1000;
 
-            // Phòng thủ (Ngăn đối thủ thắng)
-            score -= CountLine(row, col, opponent, 2) * 50;
-            score -= CountLine(row, col, opponent, 3) * 300;
-            score -= CountLine(row, col, opponent, 4) * 1500;
-            score -= CountLine(row, col, opponent, 5) * 5000;
+            // Phòng thủ: giảm mức trừ xuống trung bình để Minimax quyết định tốt hơn
+            score -= CountLine(row, col, opponent, 2) * 20;
+            score -= CountLine(row, col, opponent, 3) * 100;
+            score -= CountLine(row, col, opponent, 4) * 500;
+            score -= CountLine(row, col, opponent, 5) * 2000;
 
             return score;
         }
+
 
         // Kiểm tra nếu đặt quân tại (row, col) sẽ khiến 'player' thắng với chuỗi dài 'length'
         public bool IsPlayerAboutToWin(int row, int col, int player, int length)
