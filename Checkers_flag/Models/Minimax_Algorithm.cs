@@ -293,24 +293,25 @@ namespace Checkers_flag.Models
 }
 /*
  * 
- * CÁC KĨ THUẬT ĐANG SỬ DỤNG TRONG CODE THUẬT TOÁN MINIMAX TỐI ƯU HƠN
-**************************************************************************************************************************************
+ *                                                      CÁC KĨ THUẬT ĐANG SỬ DỤNG TRONG CODE THUẬT TOÁN MINIMAX TỐI ƯU HƠN
+ *                                                      
+***************************************************************************************************************************************************************************
  
-Đánh giá heuristic – Hàm Evaluate và EvaluateCell dùng để đánh giá giá trị nước đi hoặc ô cờ.
+    Đánh giá heuristic – Hàm Evaluate và EvaluateCell dùng để đánh giá giá trị nước đi hoặc ô cờ.
 
-Nhận dạng mẫu – Hàm CountLine đếm số quân liên tiếp để nhận dạng khả năng thắng/thua.
+    Nhận dạng mẫu – Hàm CountLine đếm số quân liên tiếp để nhận dạng khả năng thắng/thua.
 
-Đánh giá trọng số (Tấn công / Phòng thủ) – Cộng/trừ điểm dựa trên chuỗi quân liên tiếp của mình hoặc đối thủ.
+    Đánh giá trọng số (Tấn công / Phòng thủ) – Cộng/trừ điểm dựa trên chuỗi quân liên tiếp của mình hoặc đối thủ.
 
-Sắp xếp nước đi / Cắt giảm phạm vi tìm kiếm – GetCandidateMoves chỉ xét các ô gần quân cờ hiện có.
+    Sắp xếp nước đi / Cắt giảm phạm vi tìm kiếm – GetCandidateMoves chỉ xét các ô gần quân cờ hiện có.
 
-Thuật toán Minimax – Tìm nước đi tối ưu dựa trên khả năng phản ứng của đối thủ.
+    Thuật toán Minimax – Tìm nước đi tối ưu dựa trên khả năng phản ứng của đối thủ.
 
-Cắt tỉa Alpha-Beta – minimax tối ưu Minimax bằng cách loại bỏ nhánh chắc chắn không tốt.
+    Cắt tỉa Alpha-Beta – minimax tối ưu Minimax bằng cách loại bỏ nhánh chắc chắn không tốt.
 
-Tìm kiếm đệ quy giới hạn độ sâu – Giới hạn depth để tránh tính toán quá lâu.
+    Tìm kiếm đệ quy giới hạn độ sâu – Giới hạn depth để tránh tính toán quá lâu.
 
-Phát hiện nước đi thắng ngay / Chặn đối thủ – IsPlayerAboutToWin và FindAllBlockingMoves phát hiện các nước đi quan trọng.
+    Phát hiện nước đi thắng ngay / Chặn đối thủ – IsPlayerAboutToWin và FindAllBlockingMoves phát hiện các nước đi quan trọng.
  
  
  */

@@ -137,3 +137,48 @@ namespace Checkers_flag.Models
         }
     }
 }
+
+//**************************************************************************************   TỔNG KẾT    ******************************************************************************
+
+/*
+ Quản lý trạng thái bàn cờ
+
+    Trường a (kiểu int[,]): ma trận lưu trạng thái bàn cờ.
+
+    Có 2 constructor:
+
+    Checkgame() → khởi tạo bàn cờ mặc định 10×10.
+
+    Checkgame(int[,] board) → nhận bàn cờ sẵn có từ bên ngoài.
+
+Phương thức kiểm tra thắng
+
+    ktr(int i, int j, int nuocdi)
+
+    Kiểm tra xem từ ô (i, j) có tạo thành chuỗi 5 quân liên tiếp hay không (ngang, dọc, chéo).
+
+    Sử dụng demchuoi để đếm quân theo các hướng.
+
+Phương thức đếm quân theo hướng
+
+    demchuoi(int i, int j, int x, int y, int nuocdi)
+
+    Đếm số quân liên tiếp theo một hướng xác định (x, y là vector hướng).
+
+    Ví dụ: (1,0) là dọc xuống, (0,1) là ngang phải, (1,1) là chéo xuống phải,…
+
+Phương thức đánh giá nước đi
+
+    diemtungnuoc(int i, int j, int nuocdi)
+
+    Tính điểm cho một nước đi dựa trên số quân liên tiếp dài nhất có thể hình thành từ vị trí (i, j).
+
+    Hữu ích cho thuật toán minimax khi AI chọn nước đi.
+
+    Phương thức kiểm tra hòa
+
+IsDraw()
+
+    Kiểm tra nếu toàn bộ bàn cờ đã đầy (không còn ô 0) mà chưa có người thắng → trả về hòa.
+ 
+ */

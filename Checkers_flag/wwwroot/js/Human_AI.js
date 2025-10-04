@@ -1,122 +1,90 @@
-﻿const N = 10;
+﻿// ================== CONFIG ==================
+// Kích thước bàn cờ
+const N = 10;
+// Ma trận lưu trạng thái bàn cờ (0 = trống, 1 = người, 2 = AI)
 const cells = Array.from({ length: N }, () => Array(N).fill(0));
-let currentPlayer = 1; // 1: người, 2: AI
+// Lượt chơi hiện tại (1 = người, 2 = AI)
+let currentPlayer = 1;
+// Biến trạng thái trò chơi
 let gameStarted = false;
-
-const boardDiv = document.getElementById("board");
-let timeLeft = 10;
+// Biến timer
 let timerId = null;
+// Thời gian còn lại mỗi lượt (giây)
+let timeLeft = 30;
 
-// ================= TẠO BÀN CỜ =================
+// Lấy div hiển thị bàn cờ
+const boardDiv = document.getElementById("board");
+
+// ================== TẠO BÀN ==================
+// Tạo bàn cờ 10x10 trong DOM
 function createBoard() {
-    boardDiv.innerHTML = "";
+    boardDiv.innerHTML = ""; // Xóa hết nội dung cũ
     for (let i = 0; i < N; i++) {
         for (let j = 0; j < N; j++) {
             const cell = document.createElement("div");
             cell.className = "cell";
             cell.dataset.row = i;
             cell.dataset.col = j;
-            cell.style.width = "50px";
-            cell.style.height = "50px";
-            cell.style.border = "1px solid #333";
-            cell.style.display = "flex";
-            cell.style.alignItems = "center";
-            cell.style.justifyContent = "center";
-            cell.style.cursor = "pointer";
-            cell.style.userSelect = "none";
-            cell.style.fontSize = "20px";
-            cell.style.background = "#fff";
 
-            cell.addEventListener("click", () => handleClick(cell, i, j));
+            // ================== STYLE Ô ==================
+            Object.assign(cell.style, {
+                width: "50px",
+                height: "50px",
+                border: "1px solid #333",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                cursor: "pointer",
+                userSelect: "none",
+                fontSize: "20px",
+                background: "#fff"
+            });
+
+            // ================== BẮT SỰ KIỆN CLICK ==================
+            cell.addEventListener("click", () => handleClick(i, j));
+
             boardDiv.appendChild(cell);
         }
     }
 }
 
-// ================= RENDER BÀN =================
+// ================== RENDER BÀN ==================
+// Render trạng thái board hiện tại, highlight nước đi cuối (lastMove)
 function renderBoard(board, lastMove = null) {
     const cellDivs = boardDiv.querySelectorAll(".cell");
+
     for (let i = 0; i < N; i++) {
         for (let j = 0; j < N; j++) {
             const index = i * N + j;
             const cellEl = cellDivs[index];
             if (!cellEl) continue;
 
+            // ================== RESET Ô ==================
             cellEl.textContent = "";
             cellEl.style.background = "#fff";
+
+            // Render quân cờ (1 hoặc 2)
             renderCell(cellEl, board[i][j]);
 
-            if (lastMove && lastMove.row === i && lastMove.col === j)
+            // Highlight nước đi cuối cùng
+            if (lastMove && lastMove.row === i && lastMove.col === j) {
                 cellEl.style.background = "#ffff99";
+            }
         }
     }
 }
 
-// ================= CLICK =================
-function handleClick(cell, i, j) {
-    if (!gameStarted || cells[i][j] !== 0 || currentPlayer !== 1) return;
-
-    console.log(`Người chơi click: (${i}, ${j})`);
-
-    $.post("/GameWithAI/Move", { row: i, col: j }, function (res) {
-        if (!res.success) { alert(res.message); return; }
-
-        // Cập nhật toàn bộ cells từ server
-        // Chỉ cập nhật các ô mà server khác 0, tránh ghi đè nước đi AI client
-        for (let r = 0; r < N; r++) {
-            for (let c = 0; c < N; c++) {
-                if (res.board[r][c] !== 0) cells[r][c] = res.board[r][c];
-            }
-        }
-
-        // Render nước đi của người chơi
-        renderBoard(cells, { row: i, col: j });
-        currentPlayer = res.currentPlayer;
-
-        if (res.isWin || res.isDraw) {
-            clearInterval(timerId);
-            gameStarted = false;
-            const msg = res.isWin
-                ? `🎉 Người chơi ${res.winner === 1 ? "❌" : "O"} thắng!`
-                : "🤝 Hòa!";
-            console.log(msg);
-            $("#winnerText").text(msg);
-            $("#overlay").fadeIn();
-        } else if (res.lastMove) {
-            // AI đi nước tiếp theo
-            AIPlay(res.lastMove);
-        } else {
-            document.getElementById("who").innerHTML = "Lượt đi của: ❌";
-            startTimer();
-        }
-    });
-}
-
-// ================= AI ĐÁNH =================
-function AIPlay(lastMove) {
-    if (!lastMove) return;
-
-    // Cập nhật cells cho nước đi AI
-    cells[lastMove.row][lastMove.col] = 2;
-
-    // Render toàn bộ bàn và đánh dấu nước đi AI
-    renderBoard(cells, lastMove);
-
-    // Chuyển lượt sang người chơi
-    currentPlayer = 1;
-    document.getElementById("who").innerHTML = "Lượt đi của: ❌";
-    startTimer();
-}
-
-// ================= VẼ QUÂN =================
+// Render 1 ô dựa trên giá trị (1 = người, 2 = AI)
 function renderCell(el, val) {
     if (val === 1) {
+        // ================== NGƯỜI ==================
         el.textContent = "❌";
         el.style.background = "#ffe6e6";
         el.style.color = "red";
         el.style.fontSize = "30px";
         el.style.fontWeight = "bold";
     } else if (val === 2) {
+        // ================== AI ==================
         el.textContent = "O";
         el.style.background = "#e6f0ff";
         el.style.color = "blue";
@@ -125,10 +93,58 @@ function renderCell(el, val) {
     }
 }
 
-// ================= TIMER =================
+// ================== CLICK NGƯỜI ==================
+// Xử lý khi người chơi click vào 1 ô
+function handleClick(i, j) {
+    // Nếu game chưa bắt đầu, ô đã có quân, hoặc không phải lượt người -> bỏ qua
+    if (!gameStarted || cells[i][j] !== 0 || currentPlayer !== 1) return;
+
+    // 👉 1. Vẽ ngay nước đi của người chơi ở client
+    cells[i][j] = 1;
+    renderBoard(cells, { row: i, col: j });
+
+    // 👉 2. Gửi nước đi lên server để AI phản ứng
+    $.post("/GameWithAI/Move", { row: i, col: j }, function (res) {
+        // Nếu server trả lỗi (nước đi không hợp lệ)
+        if (!res.success) {
+            alert(res.message);
+            return;
+        }
+
+        // 👉 3. Chỉ cập nhật nước đi mới từ server (AI vừa đi)
+        updateBoardFromServer(res);
+
+        // 👉 4. Kiểm tra thắng/hòa
+        if (res.isWin || res.isDraw) {
+            endGame(res); // Kết thúc game
+        } else {
+            switchTurn(res.currentPlayer); // Chuyển lượt
+        }
+    });
+}
+
+// ================== CẬP NHẬT BÀN TỪ SERVER ==================
+// Chỉ render nước đi mới (AI hoặc nước cuối người)
+function updateBoardFromServer(res) {
+    if (res.lastMove) {
+        const { row, col } = res.lastMove;
+
+        // Gán nước đi dựa trên lượt đi thực tế của lastMove
+        // Nếu lượt trước là AI, gán 2; nếu người, gán 1
+        const value = (res.currentPlayer === 1) ? 2 : 1; // currentPlayer từ server là lượt tiếp theo
+        cells[row][col] = value;
+
+        // Render lại bàn với highlight nước đi cuối
+        renderBoard(cells, res.lastMove);
+    }
+}
+
+// ================== TIMER ==================
+// Bắt đầu countdown mỗi lượt 30s
 function startTimer() {
-    clearInterval(timerId);
-    timeLeft = 10;
+    clearInterval(timerId); // Reset timer
+    timeLeft = 30;
+
     timerId = setInterval(() => {
         timeLeft--;
         $("#time").text("Time: " + timeLeft + " s");
@@ -137,46 +153,51 @@ function startTimer() {
             clearInterval(timerId);
 
             if (currentPlayer === 1) {
-                // Hết giờ người chơi → AI đi
-                const move = getRandomAIMove(cells);
-                if (move) AIPlay(move);
-            } else {
-                // Hết giờ AI → chuyển lượt sang người chơi
-                currentPlayer = 1;
-                document.getElementById("who").innerHTML = "Lượt đi của: ❌";
-                startTimer();
-            }
-        }
-    }, 1000);
-}
-// ================= BẮT ĐẦU GAME =================
-$("#btnStart").click(function (e) {
-    e.stopPropagation();
-    const selected = $('input[name="firstPlayer"]:checked').val();
-    currentPlayer = parseInt(selected);
-    console.log("Game bắt đầu, người đi trước: " + currentPlayer);
-
-    $.get("/GameWithAI/ResetGame?firstPlayer=" + currentPlayer, function (res) {
-        if (res.success) {
-            // Cập nhật cells từ server
-            for (let r = 0; r < N; r++)
-                for (let c = 0; c < N; c++)
-                    cells[r][c] = res.board[r][c];
-
-            createBoard();
-
-            // Nếu AI đi trước, chọn nước đi ngẫu nhiên tại client
-            if (currentPlayer === 2) {
+                // Người hết giờ -> AI random nước đi
                 const move = getRandomAIMove(cells);
                 if (move) {
                     cells[move.row][move.col] = 2;
                     renderBoard(cells, move);
+                    switchTurn(1); // Trả lượt về người
                 }
-                currentPlayer = 1;
-                document.getElementById("who").innerHTML = "Lượt đi của: ❌";
-                startTimer();
+            } else {
+                // AI hết giờ (trường hợp đặc biệt) -> trả lượt về người
+                switchTurn(1);
             }
+        }
+    }, 1000);
+}
 
+// ================== SWITCH TURN ==================
+// Chuyển lượt chơi
+function switchTurn(nextPlayer) {
+    currentPlayer = nextPlayer;
+    if (currentPlayer === 1) {
+        document.getElementById("who").innerHTML = "Lượt đi của: ❌";
+        startTimer();
+    } else {
+        document.getElementById("who").innerHTML = "Lượt đi của: O (AI)";
+    }
+}
+
+// ================== START GAME ==================
+$("#btnStart").click(function (e) {
+    e.stopPropagation();
+    const selected = $('input[name="firstPlayer"]:checked').val();
+    currentPlayer = parseInt(selected);
+
+    // Gọi server reset game
+    $.get("/GameWithAI/ResetGame?firstPlayer=" + currentPlayer, function (res) {
+        if (res.success) {
+            createBoard();   // 👉 Tạo khung bàn
+            updateBoardFromServer(res); // 👉 Nếu AI đi trước -> render nước đi AI
+
+            if (res.lastMove && res.currentPlayer === 1) {
+                renderBoard(cells, res.lastMove);
+                switchTurn(1); // Trả lượt cho người
+            } else {
+                switchTurn(currentPlayer);
+            }
 
             gameStarted = true;
             $("#start").hide();
@@ -187,19 +208,19 @@ $("#btnStart").click(function (e) {
     });
 });
 
-// ================= RANDOM AI =================
-function getRandomAIMove(board) {
-    const emptyCells = [];
-    for (let i = 0; i < N; i++) {
-        for (let j = 0; j < N; j++) {
-            if (board[i][j] === 0) emptyCells.push({ row: i, col: j });
-        }
-    }
-    if (emptyCells.length === 0) return null;
-    const index = Math.floor(Math.random() * emptyCells.length);
-    return emptyCells[index];
+// ================== END GAME ==================
+function endGame(res) {
+    clearInterval(timerId);
+    gameStarted = false;
 
-}// ================= KẾT THÚC / CHƠI LẠI =================
+    const msg = res.isWin
+        ? `🎉 Người chơi ${res.winner === 1 ? "❌" : "O"} thắng!`
+        : "🤝 Hòa!";
+    $("#winnerText").text(msg);
+    $("#overlay").fadeIn();
+}
+
+// ================== REPLAY / CANCEL ==================
 $("#endgame").click(function (e) {
     e.stopPropagation();
     gameStarted = false;
@@ -210,12 +231,12 @@ $("#endgame").click(function (e) {
         event.stopPropagation();
         $("#CancelGame").text("AI Thắng");
         setTimeout(function () {
-
-        $("#overlayCancel").fadeOut();
-        $("#btnStart").click();
+            $("#overlayCancel").fadeOut();
+            $("#btnStart").click();
             window.location.reload();
-        },1000);
+        }, 1000);
     });
+
     $("#btnEndGame").click(function () {
         $("#overlayCancel").fadeOut();
         gameStarted = true;
@@ -226,7 +247,21 @@ $("#btnReplay").click(function () {
     $("#overlay").fadeOut();
     $("#btnStart").click();
 });
+
 $("#btnEnd").click(function () {
     $("#overlay").fadeOut();
     location.href = "/";
 });
+
+// ================== RANDOM AI MOVE ==================
+// Lấy nước đi ngẫu nhiên cho AI (trường hợp hết giờ người)
+function getRandomAIMove(board) {
+    const available = [];
+    for (let i = 0; i < N; i++) {
+        for (let j = 0; j < N; j++) {
+            if (board[i][j] === 0) available.push({ row: i, col: j });
+        }
+    }
+    if (available.length === 0) return null;
+    return available[Math.floor(Math.random() * available.length)];
+}
