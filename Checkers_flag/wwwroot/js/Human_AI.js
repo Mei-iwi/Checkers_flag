@@ -96,29 +96,35 @@ function renderCell(el, val) {
 // ================== CLICK NGƯỜI ==================
 // Xử lý khi người chơi click vào 1 ô
 function handleClick(i, j) {
-    // Nếu game chưa bắt đầu, ô đã có quân, hoặc không phải lượt người -> bỏ qua
-    if (!gameStarted || cells[i][j] !== 0 || currentPlayer !== 1) return;
+    if (!gameStarted || cells[i][j] !== 0 || currentPlayer !== 1 || isAITurn) return;
 
-    // 👉 1. Vẽ ngay nước đi của người chơi ở client
+    // Gán quân người
     cells[i][j] = 1;
     renderBoard(cells, { row: i, col: j });
 
-    // 👉 2. Gửi nước đi lên server để AI phản ứng
+    // Khóa lượt người
+    isAITurn = true;
+
+    // Cập nhật text ngay khi AI chuẩn bị đi
+    $("#who").html("Lượt đi của: <span style='font-weight:bold; color:blue'>O</span> (AI đang tính...)");
+
+    // Gửi nước đi lên server
     $.post("/GameWithAI/Move", { row: i, col: j }, function (res) {
-        // Nếu server trả lỗi (nước đi không hợp lệ)
         if (!res.success) {
             alert(res.message);
+            isAITurn = false; // mở lại nếu lỗi
+            $("#who").text("Lượt đi của: ❌ (Người)"); // reset text
             return;
         }
 
-        // 👉 3. Chỉ cập nhật nước đi mới từ server (AI vừa đi)
+        // Cập nhật nước đi từ server (AI vừa đi)
         updateBoardFromServer(res);
 
-        // 👉 4. Kiểm tra thắng/hòa
         if (res.isWin || res.isDraw) {
-            endGame(res); // Kết thúc game
+            endGame(res);
         } else {
-            switchTurn(res.currentPlayer); // Chuyển lượt
+            // Trả lượt cho AI (hoặc AI đã đi xong)
+            switchTurn(res.currentPlayer);
         }
     });
 }
@@ -168,46 +174,71 @@ function startTimer() {
     }, 1000);
 }
 
+let isAITurn = false; // true nếu AI đang đi
+
 // ================== SWITCH TURN ==================
-// Chuyển lượt chơi
 function switchTurn(nextPlayer) {
+    clearInterval(timerId);
     currentPlayer = nextPlayer;
+
     if (currentPlayer === 1) {
-        document.getElementById("who").innerHTML = "Lượt đi của: ❌";
+        // Lượt người
+        $("#who").text("Lượt đi hiện tại: ❌ (Người)");
+        isAITurn = false;
         startTimer();
     } else {
-        document.getElementById("who").innerHTML = "Lượt đi của: O (AI)";
+        // Lượt AI
+        isAITurn = true;
+
+        setTimeout(() => {
+            const move = getRandomAIMove(cells); // hoặc từ server
+            if (move) {
+                cells[move.row][move.col] = 2;
+                renderBoard(cells, move);
+            }
+
+            // Sau khi AI đi xong, trả lượt người
+            switchTurn(1);
+        }, 1000); // delay AI
     }
 }
-
 // ================== START GAME ==================
 $("#btnStart").click(function (e) {
     e.stopPropagation();
     const selected = $('input[name="firstPlayer"]:checked').val();
     currentPlayer = parseInt(selected);
 
-    // Gọi server reset game
     $.get("/GameWithAI/ResetGame?firstPlayer=" + currentPlayer, function (res) {
-        if (res.success) {
-            createBoard();   // 👉 Tạo khung bàn
-            updateBoardFromServer(res); // 👉 Nếu AI đi trước -> render nước đi AI
+        if (!res.success) return;
 
-            if (res.lastMove && res.currentPlayer === 1) {
-                renderBoard(cells, res.lastMove);
-                switchTurn(1); // Trả lượt cho người
-            } else {
-                switchTurn(currentPlayer);
-            }
+        createBoard();
 
-            gameStarted = true;
-            $("#start").hide();
-            $("#who").addClass("show");
-            $("#end").show();
-            $("#board").addClass("show");
+        if (res.lastMove && currentPlayer === 2) {
+            // AI đi trước
+            const { row, col } = res.lastMove;
+            cells[row][col] = 2; // chỉ lưu, chưa render
+
+            $("#who").html("Lượt đi hiện tại: <span style='font-weight:bold; color:blue'>O</span> (AI đang tính...)");
+            isAITurn = true;
+
+            // Delay 2 giây mới render O
+            setTimeout(() => {
+                renderBoard(cells, res.lastMove); // bây giờ mới hiển thị O
+                switchTurn(1); // trả lượt cho người
+                isAITurn = false;
+            }, 2000);
+        } else {
+            updateBoardFromServer(res); // nếu người đi trước, render ngay
+            switchTurn(currentPlayer);
         }
+
+        gameStarted = true;
+        $("#start").hide();
+        $("#who").addClass("show");
+        $("#end").show();
+        $("#board").addClass("show");
     });
 });
-
 // ================== END GAME ==================
 function endGame(res) {
     clearInterval(timerId);
