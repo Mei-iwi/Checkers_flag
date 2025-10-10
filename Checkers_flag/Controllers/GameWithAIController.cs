@@ -13,7 +13,7 @@ namespace Checkers_flag.Controllers
         //Tạo đối tượng minimaxAI
         private Minimax_Algorithm minimaxAI = new Minimax_Algorithm();
 
-        //Lượt chơi mặt định (Người đi trước)
+        // Khởi tạo lượt chơi mặt định (Người đi trước)
         private static int currentPlayer = 1; // 1: người, 2: AI
 
 
@@ -22,9 +22,9 @@ namespace Checkers_flag.Controllers
         public IActionResult ResetGame(int firstPlayer = 1)
         {
             int N = 10; // kích thước bàn cờ
-            board = new int[N, N];
-            currentPlayer = firstPlayer;
-            object lastMove = null;
+            board = new int[N, N]; // làm mới bàn cờ
+            currentPlayer = firstPlayer; // thiết lập người chơi đầu tiên la người chơi 1(Người)
+            object lastMove = null; //lưu lại nước đi cuối cùng
 
             // Nếu AI đi trước → random nước đầu
             if (firstPlayer == 2)
@@ -44,22 +44,14 @@ namespace Checkers_flag.Controllers
                 currentPlayer = 1;
             }
 
-            /*
-             
-            Trả dữ liệu về View ()
-
-            success thông báo cho phía ajax biết gọi API thành công
-
-            ToJagged chuyển đổi mảng 2 chiều sang jagged array (int[][]) trước khi đưa vào JSON
-
-            currentPlayer lượt đi tiếp theo
-
-            lastMove nước đi cuối cùng người chơi vùa thực hiện
-
-
-
-             */
-            return Json(new { success = true, board = ToJagged(board), currentPlayer, lastMove });
+            // Trả kết quả khởi tạo về client (AJAX)
+            return Json(new
+            {
+                success = true,               // API gọi thành công
+                board = ToJagged(board),      // chuyển ma trận [,] → [][] để JSON hóa
+                currentPlayer,                // lượt đi tiếp theo
+                lastMove                      // nước đi cuối cùng (nếu có)
+            });
         }
 
         //Thực hiện nước đi của AI
@@ -67,7 +59,7 @@ namespace Checkers_flag.Controllers
         [HttpPost]
         public IActionResult Move([FromForm] int row, [FromForm] int col)
         {
-            int N = board.GetLength(0);
+            int N = board.GetLength(0);// lấy kích thước bàn cờ
 
             // ================== 1. KIỂM TRA NƯỚC ĐI CỦA NGƯỜI ==================
             if (row < 0 || row >= N || col < 0 || col >= N || board[row, col] != 0)
@@ -75,11 +67,11 @@ namespace Checkers_flag.Controllers
 
             if (currentPlayer != 1)
                 return Json(new { success = false, message = "Không phải lượt người chơi!" });
-
+            // Ghi lại nước đi của người chơi
             board[row, col] = 1; // Cập nhật bàn cờ
             var check = new Checkgame(board);
 
-            // Kiểm tra người chơi thắng
+            // Kiểm tra người chơi thắng sau nước đi
             if (check.ktr(row, col, 1))
                 return Json(new
                 {
@@ -92,7 +84,7 @@ namespace Checkers_flag.Controllers
                     message = "Người chơi thắng!"
                 });
 
-            // Kiểm tra hòa
+            // Kiểm tra hòa(Khi toàn bộ bàn đã đầy)
             if (board.Cast<int>().All(x => x != 0))
                 return Json(new
                 {
@@ -110,24 +102,24 @@ namespace Checkers_flag.Controllers
             int aiRow = -1, aiCol = -1;
             object lastMoveAI = null;
 
-            var attackMoves = new List<(int i, int j, int score)>();
-            var defenseMoves = new List<(int i, int j, int score)>();
-
+            var attackMoves = new List<(int i, int j, int score)>();// Các nước tấn công tốt
+            var defenseMoves = new List<(int i, int j, int score)>(); // Các nước phòng thủ tốt
+            //Duyệt toàn bộ bàn cờ để tính điểm các ô trống
             for (int i = 0; i < N; i++)
             {
                 for (int j = 0; j < N; j++)
                 {
-                    if (board[i, j] != 0) continue;
-
+                    if (board[i, j] != 0) continue; // bỏ qua các ô đã đánh
+                    // Đánh giá điểm tấn công cho AI
                     int attackScore = minimaxAI.EvaluateCell(i, j, 2);
                     if (attackScore > 0) attackMoves.Add((i, j, attackScore));
-
+                    // Đánh giá điểm phòng thủ (chặn người choiq)
                     int defenseScore = minimaxAI.EvaluateCell(i, j, 1);
                     if (defenseScore > 0) defenseMoves.Add((i, j, defenseScore));
                 }
             }
 
-            // ================== 3. QUYẾT ĐỊNH NƯỚC ĐI ==================
+            // ================== 3. QUYẾT ĐỊNH NƯỚC ĐI TỐT NHẤT ==================
             if (attackMoves.Count > 0)
             {
                 var bestAttack = attackMoves.OrderByDescending(x => x.score).First();
@@ -138,18 +130,18 @@ namespace Checkers_flag.Controllers
             {
                 var bestDefense = defenseMoves.OrderByDescending(x => x.score).First();
                 int maxAttack = attackMoves.Count > 0 ? attackMoves.Max(x => x.score) : 0;
-
+                // Nếu điểm phòng thủ >= điểm tấn công → ưu tiên chặn người
                 if (bestDefense.score >= maxAttack)
                 {
                     aiRow = bestDefense.i; aiCol = bestDefense.j;
                 }
             }
-
+            // Nếu không tìm được nước đi phù hợp → dùng Minimax
             if (aiRow == -1 || aiCol == -1)
             {
                 minimaxAI.minimax(6, true, int.MinValue, int.MaxValue, out aiRow, out aiCol);
             }
-
+            // Đánh nước đi của AI
             if (aiRow >= 0 && aiCol >= 0)
             {
                 board[aiRow, aiCol] = 2;
@@ -161,7 +153,7 @@ namespace Checkers_flag.Controllers
             {
                 var move = (dynamic)lastMoveAI;
                 check = new Checkgame(board);
-
+                // Kiểm tra AI thắng trả về kết quả
                 if (check.ktr(move.row, move.col, 2))
                     return Json(new
                     {
@@ -173,7 +165,7 @@ namespace Checkers_flag.Controllers
                         lastMove = lastMoveAI,
                         message = "AI thắng!"
                     });
-
+                //Kiểm tra, nếu kết quả hoà bào hoà
                 if (board.Cast<int>().All(x => x != 0))
                     return Json(new
                     {
@@ -220,7 +212,7 @@ namespace Checkers_flag.Controllers
             {
                 jagged[i] = new int[m];
                 for (int j = 0; j < m; j++)
-                    jagged[i][j] = twoDim[i, j];
+                    jagged[i][j] = twoDim[i, j];//sao chép từng phần tử
             }
             //Trả về mảng có thể truyền qua json
             return jagged;

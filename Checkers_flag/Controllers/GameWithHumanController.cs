@@ -4,6 +4,8 @@ using System.Numerics;
 
 namespace Checkers_flag.Controllers
 {
+    // Controller điều khiển chế độ chơi Người vs Người
+    // Nhận nước đi từ client, xử lý logic đánh cờ, kiểm tra thắng/hòa và trả kết quả JSON.
     public class GameWithHumanController : Controller
     {
 
@@ -31,6 +33,7 @@ namespace Checkers_flag.Controllers
         }
 
         //Khởi tạo List hai chiều có phạm vi 10 * 10
+        // Bàn cờ 10x10, 0 = trống, 1 = người chơi 1, 2 = người chơi 2
         private static List<List<int>> Board = Enumerable.Range(0, 10) //-> Số hàng
                           .Select(r => Enumerable.Repeat(0, 10).ToList()) //-> Mỗi hàng lặp lại 10 cột -> Đưa về danh sách
                           .ToList(); //--> Đưa về danh sách
@@ -43,7 +46,7 @@ namespace Checkers_flag.Controllers
         [HttpPost]
         public JsonResult MoveHuman(int row, int col, int player)
         {
-            // Nếu ô đã có giá trị thì từ chối
+            // Nếu ô đã có giá trị thì từ chối và xuất thông báo lỗi
             if (Board[row][col] != 0)
             {
                 /*
@@ -60,7 +63,7 @@ namespace Checkers_flag.Controllers
             // Đặt quân cờ vào bàn
             Board[row][col] = player;
 
-            // Kiểm tra thắng thua
+            // Kiểm tra thắng thua hoà
             var array = ToArray(Board); //-> Chuyển tử List sang dạng mảng
 
             //Ghi nhận kết quả sau kiểm tra
@@ -71,12 +74,12 @@ namespace Checkers_flag.Controllers
 
             //Nếu hòa -> Không có thắng và toàn bộ bảng hết nước đi (tức không còn giá trị 0 khởi tạo)
             bool isDraw = !isWin && Board.All(r => r.All(c => c != 0));
-            
+
 
             //Kết quả kiểm tra -> Nếu có người thắng trả về người thắng nếu không trả về 0
             int winner = isWin ? player : 0;
 
-            // Đổi lượt (chỉ khi chưa kết thúc game)
+            // Đổi lượt nếu game chưa kết thúc
             if (!isWin && !isDraw)
             {
                 //Lượt xoay vòng
@@ -106,6 +109,7 @@ namespace Checkers_flag.Controllers
                 Nếu chưa kết thúc → "Lượt tiếp theo: X" hoặc "Lượt tiếp theo: O".
              
              */
+             //Trả kêt quả về client
             return Json(new
             {
                 success = true,
@@ -118,11 +122,11 @@ namespace Checkers_flag.Controllers
             });
         }
 
-        //Thiết lập lại trò chơi cho ván mới hoặc bắt đầu
+        //Làm mới bàn cờ, thiết lập lại trò chơi cho ván mới hoặc bắt đầu
         [HttpGet]
         public JsonResult ResetGame()
         {
-            //Xóa toàn bộ dữ liệu bảng cũ
+            //Xóa toàn bộ dữ liệu bàn cờ cũ
             Board.Clear();
 
             //Khởi tạo lại bảng mới
