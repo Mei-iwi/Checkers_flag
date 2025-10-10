@@ -156,12 +156,12 @@ namespace Checkers_flag.Models
         // Đếm số chuỗi gần thắng (threats) cho double-threat
         private int CountThreats(int row, int col, int player)
         {
-            int threats = 0;
-            var directions = new (int dx, int dy)[] { (0, 1), (1, 0), (1, 1), (1, -1) };
+            int threats = 0;//khởi tạp biến mối đe dọa
+            var directions = new (int dx, int dy)[] { (0, 1), (1, 0), (1, 1), (1, -1) };//các hướng kiểm tra
             foreach (var (dx, dy) in directions)
             {
-                int val = CountLineAdvanced(row, col, player, dx, dy);
-                if (val >= 500) threats++; // chuỗi mở 2 đầu hoặc gần thắng
+                int val = CountLineAdvanced(row, col, player, dx, dy);//CountLineAdvanced trả giá trị đánh giá cho chuỗi liên tiếp theo hướng (dx, dy)
+                if (val >= 500) threats++; // chuỗi mở 2 đầu hoặc gần thắng thì tăng biến mối đe dọa lên
             }
             return threats;
         }
@@ -187,9 +187,9 @@ namespace Checkers_flag.Models
             int N = a.GetLength(0);
 
             // Duyệt qua tất cả các ô trên bàn cờ để tìm các nước đi chặn cần thiết
-            for (int i = 0; i < N; i++)
+            for (int i = 0; i < N; i++) //duyệt dòng i 
             {
-                for (int j = 0; j < N; j++)
+                for (int j = 0; j < N; j++)//duyệt cột 
                 {
                     // Chỉ xét các ô trống (0)
                     if (a[i, j] == 0)
@@ -198,10 +198,9 @@ namespace Checkers_flag.Models
                         // Nếu đặt quân tại (i, j) sẽ tạo thành chuỗi 3 liên tiếp, thêm vào danh sách chặn
                         if (CountLine(i, j, player, 3) > 0)
                             
-                            blocks.Add((i, j));
+                            blocks.Add((i, j));//nếu kết quả lớn hơn 0 có chuỗi 3 liên tiếp thêm vào block 
 
-
-                        // Quay lại trạng thái ban đầu
+                        // Quay lại trạng thái ban đầu tránh ảnh hưởng bàn cờ
                         a[i, j] = 0;
                     }
                 }
@@ -220,15 +219,15 @@ namespace Checkers_flag.Models
 
             // Danh sách các nước đi khả thi (ô trống có quân cờ lân cận)
             var moves = new List<(int, int)>();
-            int N = a.GetLength(0);
+            int N = a.GetLength(0);//lấy kích thước bàn cờ
 
             // Duyệt qua tất cả các ô trên bàn cờ để tìm các nước đi khả thi
-            for (int i = 0; i < N; i++)
-                for (int j = 0; j < N; j++)
+            for (int i = 0; i < N; i++)//duyệt theo hàng
+                for (int j = 0; j < N; j++)//duyệt theo cột
                     // Chỉ xét các ô trống (0) có quân cờ lân cận trong khoảng cách 2 
-                    if (a[i, j] == 0 && HasNeighbor(i, j, 2))
+                    if (a[i, j] == 0 && HasNeighbor(i, j, 2))//kiểm tra ô trống dòng i,cột j và ô này phải có ít nhất một quân cờ(của bạn hoặc đối thủ) nằm trong phạm vi 2 ô xung quanh
                         
-                        moves.Add((i, j));
+                        moves.Add((i, j));//thêm a[i][j] vào move
 
             // Trả về danh sách các nước đi khả thi
             return moves;
@@ -237,13 +236,13 @@ namespace Checkers_flag.Models
         // Kiểm tra nếu ô (row, col) có quân cờ lân cận trong khoảng cách 'distance' không
         bool HasNeighbor(int row, int col, int distance)
         {
-            int N = a.GetLength(0);
+            int N = a.GetLength(0);//lấy kích thước bàn cờ N
 
             // Duyệt qua các ô trong khoảng cách 'distance' từ (row, col) để kiểm tra có quân cờ (1 hoặc 2) không
             for (int i = Math.Max(0, row - distance); i <= Math.Min(N - 1, row + distance); i++)
                 for (int j = Math.Max(0, col - distance); j <= Math.Min(N - 1, col + distance); j++)
-                    if (a[i, j] != 0) return true;
-            return false;
+                    if (a[i, j] != 0) return true;//nếu có quân cờ trong phạm vi xung quanh thì trả về true
+            return false;//ngược lại return false
         }
 
         // ==================== 5a. Minimax + Alpha-Beta ====================
