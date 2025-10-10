@@ -22,8 +22,8 @@ namespace Checkers_flag.Models
         public int Evaluate(int i, int j, int player)
         {
             
-            if (ktr(i, j, 1)) return 1000;
-            if (ktr(i, j, 2)) return -1000;
+            if (ktr(i, j, 1)) return 1000;//đệ quy gì gì đó
+            if (ktr(i, j, 2)) return -1000;// đệ quy gì gì gì đó
             return diemtungnuoc(i, j, player);
         }
 
@@ -42,7 +42,7 @@ namespace Checkers_flag.Models
             // Duyệt qua từng hướng và đếm số quân liên tiếp
             foreach (var dir in directions)
             {
-                int count = 1;
+                int count = 1;//tạo biến đếm bằng 1 
                 int r = row + dir[0], c = col + dir[1];
                 // Đếm về phía trước của hướng
                 while (r >= 0 && r < N && c >= 0 && c < N && a[r, c] == player)

@@ -49,7 +49,7 @@ namespace Checkers_flag.Models
             if (a[i, j] != nuocdi) return false;//kiểm tra nếu i,j không chứa nước đi(x hay o)thì không cần kiểm tra
 
             int winLength = 5; // số quân cần để thắng
-            //demchuoi(dòng i,cột j,dx,dy,x hoặc o//
+            //demchuoi(dòng i,cột j,dx,dy,X hoặc O//
             // kiểm tra chéo phải xuống trái 
             int dem = demchuoi(i, j, 1, -1, nuocdi) + demchuoi(i, j, -1, 1, nuocdi) - 1;//Đếm các nước đi hướng chéo xuống trái(1,-1),Đếm các nước đi chéo lên phải(-1,1),-1 vì cộng hai hướng đối lập nên trừ 1 nước đi (i,j) bị tính trùng
             if (dem >= winLength) return true;//neu dem = winlength thì trả về giá trị là true thắng
@@ -76,11 +76,12 @@ namespace Checkers_flag.Models
         {
             int dem = 0;//khởi tạo bộ đếm,đếm số quân bắt đầu từ ô(i,j) theo hướng (x,y)
             int n = a.GetLength(0);//số phần tử của số hàng vd:a[6,8] thì n = 6
-            int m = a.GetLength(1);//số phần tử của cột vd:a[6,8] thì n = 8
+            int m = a.GetLength(1);//số phần tử của cột vd:a[6,8] thì m=8
             // x, y là hướng di chuyển (vd: x=1,y=0 là dọc xuống, x=0,y=1 là ngang phải, x=1,y=1 là chéo phải xuống,...)
 
             while (i >= 0 && i < n && j >= 0 && j < m && a[i, j] == nuocdi)//điều kiện là nước đi(x,o) phải nằm trong bàn cờ thì thực hiện tiếp câu lệnh bên dưới
             {
+                
                 dem++;//tăng biến đếm lên 1(đếm số quân)
                 //dịch sang ô kế tiếp theo hướng x,y
                 i += x;
