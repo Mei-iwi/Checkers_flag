@@ -81,7 +81,11 @@ namespace Checkers_flag.Models
 
             while (i >= 0 && i < n && j >= 0 && j < m && a[i, j] == nuocdi)//điều kiện là nước đi(x,o) phải nằm trong bàn cờ thì thực hiện tiếp câu lệnh bên dưới
             {
+<<<<<<< HEAD
 
+=======
+                
+>>>>>>> ad6001fb4a89aefce32b31af117d1561e7e8802d
                 dem++;//tăng biến đếm lên 1(đếm số quân)
                 //dịch sang ô kế tiếp theo hướng x,y
                 i += x;
