@@ -5,6 +5,8 @@ using System.Collections.Generic;
 
 namespace Checkers_flag.Controllers
 {
+    // Controller điều khiển chế độ chơi Người vs AI
+    // Xử lý lượt đánh của người, phản hồi nước đi của AI bằng chiến lược Minimax hoặc heuristic.
     public class GameWithAIController : Controller
     {
         //Khởi tạo ma trận 10 * 10 cho trò chơi
@@ -26,7 +28,7 @@ namespace Checkers_flag.Controllers
             currentPlayer = firstPlayer; // thiết lập người chơi đầu tiên la người chơi 1(Người)
             object lastMove = null; //lưu lại nước đi cuối cùng
 
-            // Nếu AI đi trước → random nước đầu
+            // Nếu AI đi trước → random một ô ngẫu nhiên
             if (firstPlayer == 2)
             {
                 var rnd = new Random();
@@ -35,9 +37,9 @@ namespace Checkers_flag.Controllers
                 {
                     aiRow = rnd.Next(0, N);
                     aiCol = rnd.Next(0, N);
-                } while (board[aiRow, aiCol] != 0);
+                } while (board[aiRow, aiCol] != 0);// Lặp đén khi tìm được ô trống
 
-                board[aiRow, aiCol] = 2; // AI đánh
+                board[aiRow, aiCol] = 2; // AI đánh quân cờ
                 lastMove = new { row = aiRow, col = aiCol };
 
                 // Sau khi AI đi thì đến lượt người chơi
@@ -62,9 +64,10 @@ namespace Checkers_flag.Controllers
             int N = board.GetLength(0);// lấy kích thước bàn cờ
 
             // ================== 1. KIỂM TRA NƯỚC ĐI CỦA NGƯỜI ==================
+            //Nếu đánh ngoài bàn hoặc ô đã có người đánh -> báo lỗi
             if (row < 0 || row >= N || col < 0 || col >= N || board[row, col] != 0)
                 return Json(new { success = false, message = "Ô không hợp lệ!" });
-
+            //Nếu không phải lượt người chơi → báo lỗi
             if (currentPlayer != 1)
                 return Json(new { success = false, message = "Không phải lượt người chơi!" });
             // Ghi lại nước đi của người chơi
@@ -72,6 +75,14 @@ namespace Checkers_flag.Controllers
             var check = new Checkgame(board);
 
             // Kiểm tra người chơi thắng sau nước đi
+            // Trả kết quả dạng JSON về cho giao diện: 
+            // - success = true → nước đi hợp lệ
+            // - board = ToJagged(board) → chuyển mảng 2D sang dạng có thể gửi về JSON
+            // - currentPlayer = 0 → dừng lượt chơi (vì đã thắng)
+            // - isWin = true → trạng thái thắng
+            // - winner = 1 → người chơi thắng
+            // - lastMove = {row, col} → vị trí nước đi cuối
+            // - message = "Người chơi thắng!" → thông báo hiển thị
             if (check.ktr(row, col, 1))
                 return Json(new
                 {
@@ -86,6 +97,14 @@ namespace Checkers_flag.Controllers
 
             // Kiểm tra hòa(Khi toàn bộ bàn đã đầy)
             if (board.Cast<int>().All(x => x != 0))
+            // Nếu đúng → trả kết quả JSON báo hòa:
+            // - success = true → nước đi hợp lệ
+            // - board = bàn cờ hiện tại
+            // - currentPlayer = 0 → dừng lượt (vì đã kết thúc)
+            // - isDraw = true → đánh dấu là hòa
+            // - winner = 0 → không có người thắng
+            // - lastMove → nước đi cuối
+            // - message = "Hòa!" → hiển thị thông báo
                 return Json(new
                 {
                     success = true,
@@ -98,10 +117,10 @@ namespace Checkers_flag.Controllers
                 });
 
             // ================== 2. AI ĐI ==================
-            minimaxAI.a = board;
+            minimaxAI.a = board; // Gán bạn cờ cho AI xử lý
             int aiRow = -1, aiCol = -1;
             object lastMoveAI = null;
-
+            //Hai danh sách lưu các nước tấn công và phòng thủ
             var attackMoves = new List<(int i, int j, int score)>();// Các nước tấn công tốt
             var defenseMoves = new List<(int i, int j, int score)>(); // Các nước phòng thủ tốt
             //Duyệt toàn bộ bàn cờ để tính điểm các ô trống
@@ -110,7 +129,7 @@ namespace Checkers_flag.Controllers
                 for (int j = 0; j < N; j++)
                 {
                     if (board[i, j] != 0) continue; // bỏ qua các ô đã đánh
-                    // Đánh giá điểm tấn công cho AI
+                    // Tính điểm tấn công cho AI (đánh vào ô có lợi cho mình)
                     int attackScore = minimaxAI.EvaluateCell(i, j, 2);
                     if (attackScore > 0) attackMoves.Add((i, j, attackScore));
                     // Đánh giá điểm phòng thủ (chặn người choiq)
@@ -120,12 +139,13 @@ namespace Checkers_flag.Controllers
             }
 
             // ================== 3. QUYẾT ĐỊNH NƯỚC ĐI TỐT NHẤT ==================
+            //Ưu tiên nước tấn công có điểm cao nhất
             if (attackMoves.Count > 0)
             {
                 var bestAttack = attackMoves.OrderByDescending(x => x.score).First();
                 aiRow = bestAttack.i; aiCol = bestAttack.j;
             }
-
+            //So sánh nước phòng thủ-> nếu cần ưu tiên chặn người chơi thắng
             if (defenseMoves.Count > 0)
             {
                 var bestDefense = defenseMoves.OrderByDescending(x => x.score).First();

@@ -23,22 +23,23 @@ namespace Checkers_flag.Controllers
             //Khởi tạo ma trận n hàng, m cột
             var arr = new int[n, m];
 
-            //Sao chép các giá trị tử mảng gốc
-            for (int i = 0; i < n; i++)
-                for (int j = 0; j < m; j++)
-                    arr[i, j] = board[i][j];
+           // Duyệt từng phần tử để sao chép từ danh sách gốc sang mảng
+            for (int i = 0; i < n; i++)         // i = chỉ số hàng (row); bắt đầu 0, lặp tới n-1
+                for (int j = 0; j < m; j++)     // j = chỉ số cột (column) trong hàng i; bắt đầu 0, lặp tới m-1
+                    arr[i, j] = board[i][j];    // sao chép giá trị tại hàng i, cột j từ board (List<List<int>>) sang arr (int[,])
 
-            //Trả về mảng
+
+            //Trả về mảng kết quả
             return arr;
         }
 
         //Khởi tạo List hai chiều có phạm vi 10 * 10
         // Bàn cờ 10x10, 0 = trống, 1 = người chơi 1, 2 = người chơi 2
-        private static List<List<int>> Board = Enumerable.Range(0, 10) //-> Số hàng
+        private static List<List<int>> Board = Enumerable.Range(0, 10) //-> Taọ 10 hàng
                           .Select(r => Enumerable.Repeat(0, 10).ToList()) //-> Mỗi hàng lặp lại 10 cột -> Đưa về danh sách
-                          .ToList(); //--> Đưa về danh sách
+                          .ToList(); //Gộp lại thành danh sách 2 chiều
 
-        //Khởi tạo người chơi mặc định 
+        //Khởi tạo người chơi mặc định là người chơi 1
         static int CurrentPlayer = 1;
 
 
@@ -60,16 +61,16 @@ namespace Checkers_flag.Controllers
 
             //Trường hợp nước đi hợp lệ
 
-            // Đặt quân cờ vào bàn
+            // Ô hợp lệ → Gán quân của người chơi vào vị trí [row][col]
             Board[row][col] = player;
 
             // Kiểm tra thắng thua hoà
             var array = ToArray(Board); //-> Chuyển tử List sang dạng mảng
 
-            //Ghi nhận kết quả sau kiểm tra
+            //Tạo đối tượng kiểm tra thắng thua
             var Win = new Checkgame(array);
 
-            //Nếu có người thắng gán lại kết quả -> (cột, hàng, lượt người chơi)
+            //Nếu có người thắng(5 quân cờ liên tiếp) gán lại kết quả -> (cột, hàng, lượt người chơi)
             bool isWin = Win.ktr(row, col, player);
 
             //Nếu hòa -> Không có thắng và toàn bộ bảng hết nước đi (tức không còn giá trị 0 khởi tạo)
@@ -79,10 +80,10 @@ namespace Checkers_flag.Controllers
             //Kết quả kiểm tra -> Nếu có người thắng trả về người thắng nếu không trả về 0
             int winner = isWin ? player : 0;
 
-            // Đổi lượt nếu game chưa kết thúc
+            // Đổi lượt cho người chơi kế tiếp nếu game chưa kết thúc
             if (!isWin && !isDraw)
             {
-                //Lượt xoay vòng
+                // Nếu người chơi hiện tại là 1 thì đổi sang 2, và ngược lại
                 CurrentPlayer = (player == 1) ? 2 : 1;
             }
             //Dữ liệu trả về
@@ -146,7 +147,7 @@ namespace Checkers_flag.Controllers
             currentPlayer: Lượt đi đầu tiên (theo giá trị CurrentPlayer, có thể là người hoặc AI).
              */
 
-
+            // Trả về dữ liệu JSON thông báo làm mới thành công
             return Json(new
             {
                 message = "Trận mới đã bắt đầu!",
