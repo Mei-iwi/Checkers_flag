@@ -68,6 +68,16 @@ function handleClickPvP(cell, i, j) {
 
                 // Xử lý thắng
                 if (res.isWin) {
+
+                    // Tìm chuỗi 5 ô thắng để tô đỏ
+                    const win = findWinningLinePvP(res.board);
+                    if (win) {
+                        renderBoardPvP(res.board, win.line);
+                    } else {
+                        renderBoardPvP(res.board);
+                    }
+
+
                     clearInterval(timerIdPvP);
                     gameStartedPvP = false;
 
@@ -96,35 +106,95 @@ function handleClickPvP(cell, i, j) {
     });
 }
 
-// ================= VẼ QUÂN CỜ =================
+// ================= VẼ QUÂN CỜ (hàm con được dùng trong renderBoardPvP) =================
 function renderCellPvP(el, val) {
     if (val === 1) {
         el.textContent = "❌";
-        el.style.background = "#ffe6e6";
+        el.style.background = "#ffe6e6"; // đỏ nhạt
         el.style.color = "red";
         el.style.fontSize = "30px";
         el.style.fontWeight = "bold";
     } else if (val === 2) {
         el.textContent = "O";
-        el.style.background = "#e6f0ff";
-        el.style.color = "blue";
+        el.style.background = "#cce0ff"; // 💙 xanh nhạt hơn
+        el.style.color = "#0040ff";      // xanh đậm
         el.style.fontSize = "30px";
         el.style.fontWeight = "bold";
     } else {
         el.textContent = "";
-        el.style.background = "#fff";
+        el.style.background = "#ffffff"; // trắng
     }
 }
 
-function renderBoardPvP(board) {
+
+// ================= VẼ QUÂN CỜ =================
+function renderBoardPvP(board, winningLine = null) {
     const cells = boardDivPvP.children;
+    const winSet = new Set();
+
+    if (winningLine) {
+        winningLine.forEach(p => winSet.add(p.row + ',' + p.col));
+    }
+
     for (let i = 0; i < N_PvP; i++) {
         for (let j = 0; j < N_PvP; j++) {
             const idx = i * N_PvP + j;
-            renderCellPvP(cells[idx], board[i][j]);
+            const el = cells[idx];
+
+            // 🔹 Reset trước khi vẽ
+            el.style.background = "#fff";
+            el.style.color = "black";
+            el.style.fontWeight = "normal";
+
+            // 🔹 Vẽ quân cờ
+            renderCellPvP(el, board[i][j]);
+
+            // 🔹 Nếu ô nằm trong chuỗi thắng → tô đỏ nổi bật
+            if (winSet.has(i + ',' + j)) {
+                if (board[i][j] === 1) { // ❌
+                    el.style.background = "#e60000"; // đỏ tươi
+                    el.style.color = "#ffffff";
+                } else if (board[i][j] === 2) { // O
+                    el.style.background = "#0040ff"; // xanh đậm
+                    el.style.color = "#ffffff";
+                }
+                el.style.fontWeight = "bold";
+                el.style.transition = "background 0.3s ease";
+            }
         }
     }
+
+    // 🔹 Thêm hiệu ứng nhấp nháy đỏ nếu có chuỗi thắng
+    if (winningLine) {
+        let blink = true;
+        const blinkInterval = setInterval(() => {
+            winningLine.forEach(p => {
+                const el = cells[p.row * N_PvP + p.col];
+                if (cellsPvP[p.row][p.col] === 1) { // ❌
+                    el.style.background = blink ? "#e60000" : "#ff4d4d";
+                } else if (cellsPvP[p.row][p.col] === 2) { // O
+                    el.style.background = blink ? "#0040ff" : "#66b3ff";
+                }
+                el.style.color = "#ffffff";
+                el.style.fontWeight = "bold";
+            });
+            blink = !blink;
+        }, 400);
+
+        // Dừng nhấp nháy sau 4 giây
+        setTimeout(() => clearInterval(blinkInterval), 4000);
+    }
 }
+
+//function renderBoardPvP(board) {
+//    const cells = boardDivPvP.children;
+//    for (let i = 0; i < N_PvP; i++) {
+//        for (let j = 0; j < N_PvP; j++) {
+//            const idx = i * N_PvP + j;
+//            renderCellPvP(cells[idx], board[i][j]);
+//        }
+//    }
+//}
 
 // ================= TIMER =================
 let timerIdPvP = null;
@@ -242,7 +312,7 @@ $("#btn-humman").click(function (e) {
     const selected = $('input[name="firstPlayer"]:checked').val();
     currentPlayerPvP = parseInt(selected);
 
-   
+
     gameStartedPvP = true;
 
     $.get("/GameWithHuman/ResetGame", function (res) {
@@ -315,3 +385,40 @@ $("#btnEnd").click(function () {
     $("#overlay").fadeOut();
     location.href = "/";
 });
+
+
+// ================= TÌM CHUỖI 5 QUÂN LIÊN TIẾP =================
+function findWinningLinePvP(board) {
+    const directions = [
+        { dr: 1, dc: 0 },   // dọc
+        { dr: 0, dc: 1 },   // ngang
+        { dr: 1, dc: 1 },   // chéo xuống phải
+        { dr: 1, dc: -1 }   // chéo xuống trái
+    ];
+
+    for (let i = 0; i < N_PvP; i++) {
+        for (let j = 0; j < N_PvP; j++) {
+            const player = board[i][j];
+            if (player === 0) continue;
+
+            for (let dir of directions) {
+                let line = [{ row: i, col: j }];
+                for (let k = 1; k < 5; k++) {
+                    const r = i + dir.dr * k;
+                    const c = j + dir.dc * k;
+                    if (
+                        r < 0 || r >= N_PvP || c < 0 || c >= N_PvP ||
+                        board[r][c] !== player
+                    ) {
+                        break;
+                    }
+                    line.push({ row: r, col: c });
+                }
+                if (line.length === 5) {
+                    return { player, line };
+                }
+            }
+        }
+    }
+    return null;
+}

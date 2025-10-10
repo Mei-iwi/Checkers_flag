@@ -50,29 +50,71 @@ function createBoard() {
 
 // ================== RENDER BÀN ==================
 // Cập nhật lại bàn cờ dựa trên trạng thái cells[], highlight nước đi cuối (lastMove)
-function renderBoard(board, lastMove = null) {
+function renderBoard(board, lastMove = null, winningLine = null) {
     const cellDivs = boardDiv.querySelectorAll(".cell");
+
+    // Nếu có chuỗi thắng → tạo set chứa vị trí các ô thắng
+    const winSet = new Set();
+    if (winningLine) {
+        winningLine.forEach(p => winSet.add(p.row + ',' + p.col));
+    }
 
     for (let i = 0; i < N; i++) {
         for (let j = 0; j < N; j++) {
-            const index = i * N + j; // xác định chỉ số ô trong NodeList
+            const index = i * N + j;
             const cellEl = cellDivs[index];
-            if (!cellEl) continue; // nếu không có lỗi (DOM) thì bỏ qua
+            if (!cellEl) continue;
 
-            // ================== RESET Ô ==================
-            //Xoá nội dung và màu nền ô
+            // Reset lại ô
             cellEl.textContent = "";
             cellEl.style.background = "#fff";
+            cellEl.classList.remove("winner");
 
-            // Render quân cờ (1 hoặc 2)
+            // Vẽ quân cờ
             renderCell(cellEl, board[i][j]);
 
-            // Highlight nước đi cuối cùng
+            // Tô vàng nước đi cuối
             if (lastMove && lastMove.row === i && lastMove.col === j) {
                 cellEl.style.background = "#ffff99";
             }
+
+            // Nếu ô nằm trong chuỗi thắng → tô đỏ
+            if (winSet.has(i + ',' + j)) {
+                if (board[i][j] === 1) { // ❌
+                    cellEl.style.background = "#e60000"; // đỏ tươi
+                    cellEl.style.color = "#ffffff";
+                } else if (board[i][j] === 2) { // O
+                    cellEl.style.background = "#0040ff"; // xanh đậm
+                    cellEl.style.color = "#ffffff";
+                }
+                cellEl.style.fontWeight = "bold";
+                cellEl.style.transition = "background 0.3s ease";
+            }
+
         }
     }
+
+    // 🔹 Chỉ tạo hiệu ứng nhấp nháy một lần (nếu có chuỗi thắng)
+    if (winningLine) {
+        let blink = true;
+        const blinkInterval = setInterval(() => {
+            winningLine.forEach(p => {
+                const el = cellDivs[p.row * N + p.col];
+                if (board[p.row][p.col] === 1) { // ❌
+                    el.style.background = blink ? "#e60000" : "#ff4d4d";
+                } else if (board[p.row][p.col] === 2) { // O
+                    el.style.background = blink ? "#0040ff" : "#66b3ff";
+                }
+                el.style.color = "#ffffff";
+                el.style.fontWeight = "bold";
+            });
+            blink = !blink;
+        }, 400);
+
+        // Dừng nhấp nháy sau 4 giây
+        setTimeout(() => clearInterval(blinkInterval), 4000);
+    }
+
 }
 
 // Render 1 ô dựa trên giá trị (1 = người, 2 = AI)
@@ -142,6 +184,7 @@ function updateBoardFromServer(res) {
 
         // Xác định nước đi cuối là của ai
         let value = 0;
+
         if (res.isWin || res.isDraw) {
             // Nếu AI thắng hoặc người thắng, lấy winner
             value = res.winner;
@@ -149,14 +192,24 @@ function updateBoardFromServer(res) {
             // Nếu chưa thắng, nước đi cuối luôn là AI vì người đi trước đã render
             value = 2;
         }
-        //Gán giá trị và vẽ lại bàn
+
+        // Gán giá trị vào bảng
         cells[row][col] = value;
 
-        // Render lại bàn với highlight nước đi cuối
-        renderBoard(cells, res.lastMove);
+        // 🔍 Kiểm tra xem có chuỗi thắng 5 quân không
+        const win = findWinningLine(cells);
+
+        if (win) {
+            // Tô đỏ 5 ô thắng và hiển thị thông báo
+            renderBoard(cells, res.lastMove, win.line);
+            $("#winnerText").text(`🎉 Người chơi ${win.player === 1 ? "❌" : "O"} thắng!`);
+            endGame({ isWin: true, winner: win.player });
+        } else {
+            // Nếu chưa thắng, chỉ render nước đi mới
+            renderBoard(cells, res.lastMove);
+        }
     }
 }
-
 
 // ================== TIMER ==================
 let timerIdPvP = null;
@@ -300,7 +353,7 @@ $("#btnStart").click(function (e) {//bắt sự kiện click vào nút start
     currentPlayer = parseInt(selected);
     // Gọi API khởi tạo game mới trên server
 
-    
+
     $.get("/GameWithAI/ResetGame?firstPlayer=" + currentPlayer, function (res) {
         if (!res.success) return;
 
@@ -309,7 +362,7 @@ $("#btnStart").click(function (e) {//bắt sự kiện click vào nút start
 
         createBoard();//tạo bàn cờ mới
 
-    
+
         if (res.lastMove && currentPlayer === 2) {
             // AI đi trước -> server trả về nước đi của AI
             const { row, col } = res.lastMove;
@@ -428,4 +481,25 @@ function resetBoard() {
     // 4. Reset hiển thị timer và lượt chơi
     //$("#time").text("Time: 30 s");// hiển thị thời gian mặc định
     $("#who").text("Lượt đi hiện tại: ❌ (Người)");// hiển thị lượt đi là người
+}
+
+function findWinningLine(board) {
+    const dirs = [[0, 1], [1, 0], [1, 1], [1, -1]];
+    const N = board.length;
+    for (let i = 0; i < N; i++) {
+        for (let j = 0; j < N; j++) {
+            const player = board[i][j];
+            if (player === 0) continue;
+            for (const [dr, dc] of dirs) {
+                const line = [{ row: i, col: j }];
+                let r = i + dr, c = j + dc;
+                while (r >= 0 && r < N && c >= 0 && c < N && board[r][c] === player) {
+                    line.push({ row: r, col: c });
+                    if (line.length === 5) return { player, line };
+                    r += dr; c += dc;
+                }
+            }
+        }
+    }
+    return null;
 }
