@@ -22,42 +22,43 @@ namespace Checkers_flag.Models
         public int Evaluate(int i, int j, int player)
         {
             
-            if (ktr(i, j, 1)) return 1000;//đệ quy gì gì đó
-            if (ktr(i, j, 2)) return -1000;// đệ quy gì gì gì đó
-            return diemtungnuoc(i, j, player);
+            if (ktr(i, j, 1)) return 1000;//Nếu player 1 thắng trả về giá trị 1000
+            if (ktr(i, j, 2)) return -1000;//nếu player 2 thắng trả về giá trị -1000
+            return diemtungnuoc(i, j, player); // trả về điểm herustic
         }
 
         // ==================== 2. Đếm số quân liên tiếp ====================
         // Đếm số chuỗi liên tiếp của 'player' có độ dài 'length' đi qua ô (row, col) 
         int CountLine(int row, int col, int player, int length)
         {
-            int score = 0;
-            int N = a.GetLength(0);
-            // Các hướng: ngang, dọc, chéo chính, chéo phụ
+            int score = 0;//tạo biến luuw kết quả
+            int N = a.GetLength(0);//Kích thước của bàn cờ có giá trị N
+            // Các hướng: ngang, dọc(1,0), chéo chính(1,1), chéo phụ(1,-1)
             int[][] directions = new int[][]
             {
                 
                 new int[]{0,1}, new int[]{1,0}, new int[]{1,1}, new int[]{1,-1}
+                        //ngang          //dọc          //chéo chính    //chéo phụ
             };
             // Duyệt qua từng hướng và đếm số quân liên tiếp
             foreach (var dir in directions)
             {
                 int count = 1;//tạo biến đếm bằng 1 
-                int r = row + dir[0], c = col + dir[1];
+                int r = row + dir[0], c = col + dir[1];//bắt đầu đi thêm 1 ô theo hướng của dir 
                 // Đếm về phía trước của hướng
-                while (r >= 0 && r < N && c >= 0 && c < N && a[r, c] == player)
+                while (r >= 0 && r < N && c >= 0 && c < N && a[r, c] == player)//kiểm tra để đảm bảo nước của người chơi không vượt ra khỏi phạm vi bàn cờ 
                 {
-                    count++; r += dir[0]; c += dir[1];
+                    count++; r += dir[0]; c += dir[1];//tăng lượng quân lên 1,di chuyển hàng và cột theo hướng đang xét rồi lặp lại dòng lặp while
                 }
 
-                r = row - dir[0]; c = col - dir[1];
+                r = row - dir[0]; c = col - dir[1];// đặt lại r và c về vị trí cũ để đếm ngược lại
                 // Đếm về phía sau của hướng
-                while (r >= 0 && r < N && c >= 0 && c < N && a[r, c] == player)
+                while (r >= 0 && r < N && c >= 0 && c < N && a[r, c] == player)//kiểm tra đảm bảo nước đi không vượt quá khỏi ranh giới bàn cờ
                 {
-                    count++; r -= dir[0]; c -= dir[1];
+                    count++; r -= dir[0]; c -= dir[1];//đếm lượng quân, di chuyển hàng và cột theo hướng đang xét(trừ là do ngược lại với hướng đi lên)
                 }
                 // Nếu số quân liên tiếp đạt độ dài yêu cầu, tăng điểm
-                if (count >= length) score++;
+                if (count >= length) score++;//tổng số quân đếm được dài hơn độ dài chuỗi tối thiểu mà bạn cần kiểm tra
             }
             //Trả về số điểm
             return score;
@@ -96,26 +97,26 @@ namespace Checkers_flag.Models
         // ==================== 3. Đánh giá 1 ô (nâng cao) ====================
         public int EvaluateCell(int row, int col, int player)
         {
-            int score = 0;
-            int opponent = player == 1 ? 2 : 1;
+            int score = 0;//khởi tạo giá trị điểm số
+            int opponent = player == 1 ? 2 : 1;//tổng quân đối thủ
 
             // Tính điểm cho 4 hướng: ngang, dọc, chéo chính, chéo phụ
             var directions = new (int dx, int dy)[] { (0, 1), (1, 0), (1, 1), (1, -1) };
-
+            //đánh giá nước đi của đối thủ
             foreach (var (dx, dy) in directions)
             {
                 var attackInfo = CountLineAdvanced(row, col, player, dx, dy);
-                score += attackInfo;
+                score += attackInfo;//cộng điểm nếu là nước đi tấn công 
 
                 var defenseInfo = CountLineAdvanced(row, col, opponent, dx, dy);
-                score -= defenseInfo;
+                score -= defenseInfo;//trừ điểm nếu là nước đi có hại 
             }
 
             // DOUBLE-THREAT
             int attackThreats = CountThreats(row, col, player);
-            if (attackThreats >= 2) score += 10000;
+            if (attackThreats >= 2) score += 10000;//nếu có hơn hơn 2 nước nguy hiểm thì cộng nhiều điểm cho Al(ưu tiên tấn công để thắng chắc)
 
-            int defenseThreats = CountThreats(row, col, opponent);
+            int defenseThreats = CountThreats(row, col, opponent);// nếu đối thủ có hơn 2 nước nguy hiểm thì ưu tiên cho al phòng thủ 
             if (defenseThreats >= 2) score += 5000;
 
             return score;
@@ -125,33 +126,32 @@ namespace Checkers_flag.Models
         private int CountLineAdvanced(int row, int col, int player, int dx, int dy)
         {
             int count = 1; // tính cả ô hiện tại
-            int openEnds = 0;
-            int N = a.GetLength(0);
+            int openEnds = 0;//khoảng trống giữa hai số đầu mở
+            int N = a.GetLength(0);//giá trị của bàn cờ vd bàn cờ có độ rộng là 5x5 
 
-            // Kiểm tra 1 hướng
-            int r = row + dx, c = col + dy;
-            while (IsValid(r, c) && a[r, c] == player) { count++; r += dx; c += dy; }
-            if (IsValid(r, c) && a[r, c] == 0) openEnds++;
-
+            // Kiểm tra 1 hướng 
+            int r = row + dx, c = col + dy;//
+            while (IsValid(r, c) && a[r, c] == player) { count++; r += dx; c += dy; }//kiểm tra vị trí player đánh nếu đúng thì duyệt theo hướng dx dy
+            if (IsValid(r, c) && a[r, c] == 0) openEnds++; // kiểm xem ô ở vị r c có trống hay không và kiểm tra có nằm ngoài bàn cờ hay không sau đó cập nhật lại openEnds
             // Kiểm tra hướng ngược lại
             r = row - dx; c = col - dy;
-            while (IsValid(r, c) && a[r, c] == player) { count++; r -= dx; c -= dy; }
-            if (IsValid(r, c) && a[r, c] == 0) openEnds++;
+            while (IsValid(r, c) && a[r, c] == player) { count++; r -= dx; c -= dy; }// kiểm tra vị trí player đánh nếu đúng thì duyệt theo hướng dx dy(chiều ngược lại với ở trên)
+            if (IsValid(r, c) && a[r, c] == 0) openEnds++;//// kiểm xem ô ở vị r c có trống hay không và kiểm tra có nằm ngoài bàn cờ hay không sau đó cập nhật lại openEnds
 
-            int score = 0;
+            int score = 0;//tạo biến lưu điểm
             switch (count)
-            {
-                case 2: score = openEnds == 2 ? 20 : 10; break;
-                case 3: score = openEnds == 2 ? 100 : 50; break;
-                case 4: score = openEnds == 2 ? 500 : 200; break;
-                case 5: score = 10000; break; // thắng ngay
-                default: score = count > 5 ? 10000 : 0; break;
+            {   //cập nhật lại giá trị điểm
+                case 2: score = openEnds == 2 ? 20 : 10; break;//2 đầu mở thì lưu 20 điểm một đầu thì 10 điểm
+                case 3: score = openEnds == 2 ? 100 : 50; break;//3 quân thì lưu 100 với hai đầu mở ,một đầu thì 50
+                case 4: score = openEnds == 2 ? 500 : 200; break;//4 quân thì lưu 500 điểm với hai đầu mở, một đầu thì 200
+                case 5: score = 10000; break; //5 quân thắng ngay để al ưu tiên nước đi đó
+                default: score = count > 5 ? 10000 : 0; break;//dài hơn 5 quân thì vẫn coi như vẫn thắng ngược lại thì không đáng kể
             }
             return score;
         }
 
         // Kiểm tra nước đi có hợp lệ
-        private bool IsValid(int r, int c) => r >= 0 && r < a.GetLength(0) && c >= 0 && c < a.GetLength(1);
+        private bool IsValid(int r, int c) => r >= 0 && r < a.GetLength(0) && c >= 0 && c < a.GetLength(1);//đảm bảo nước đi không vượt quá bàn cờ
 
         // Đếm số chuỗi gần thắng (threats) cho double-threat
         private int CountThreats(int row, int col, int player)
@@ -165,21 +165,16 @@ namespace Checkers_flag.Models
             }
             return threats;
         }
-
-
-
         // Kiểm tra nếu đặt quân tại (row, col) sẽ khiến 'player' thắng với chuỗi dài 'length'
         public bool IsPlayerAboutToWin(int row, int col, int player, int length)
         {
             // Tạm thời đặt quân vào ô
             a[row, col] = player;
            
-            bool result = CountLine(row, col, player, length) > 0;
+            bool result = CountLine(row, col, player, length) > 0;//kiểm tra vị trí đặt quân có tạo được lenght > 0 hay không
 
             // Quay lại trạng thái ban đầu
             a[row, col] = 0;
-            
-
             //Trả về kết quả
             return result;
         }
