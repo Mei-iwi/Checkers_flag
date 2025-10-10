@@ -1,40 +1,38 @@
-﻿const N_PvP = 15;
-const cellsPvP = Array.from({ length: N_PvP }, () => Array(N_PvP).fill(0));
-let gameStartedPvP = false;
+﻿const N_PvP = 15;//ma trân có kích thước 15
+const cellsPvP = Array.from({ length: N_PvP }, () => Array(N_PvP).fill(0));//tạo ma trận ban đầu với các ô có giá trị 0(bằng 0 là ô trống)
+let gameStartedPvP = false;//cờ hiệu để xác nhận game bắt đầu chưa
 
-const boardDivPvP = document.getElementById("board");
-
-
+const boardDivPvP = document.getElementById("board");//thẻ board để hiện bàn cờ
 // ================= TẠO BÀN CỜ =================
 function createBoardPvP() {
-    boardDivPvP.innerHTML = "";
-    for (let i = 0; i < N_PvP; i++) {
-        for (let j = 0; j < N_PvP; j++) {
-            const cell = document.createElement("div");
-            cell.className = "cell";
-            cell.dataset.row = i;
-            cell.dataset.col = j;
-            cell.style.width = "40px";
-            cell.style.height = "40px";
-            cell.style.border = "1px solid #333";
-            cell.style.display = "flex";
-            cell.style.alignItems = "center";
-            cell.style.justifyContent = "center";
-            cell.style.cursor = "pointer";
-            cell.style.userSelect = "none";
-            cell.style.fontSize = "20px";
-            cell.style.background = "#fff";
+    boardDivPvP.innerHTML = "";//xóa nội dung cũ 
+    for (let i = 0; i < N_PvP; i++) {//duyệt mảng vị trí dòng i sau cho bé hơn kích thước mảng
+        for (let j = 0; j < N_PvP; j++) {//duyệt mảng vị trí dòng j sau cho bé hơn kích thước mảng
+            const cell = document.createElement("div");//tạo o 
+            cell.className = "cell";//tạo cột
+            cell.dataset.row = i;//gán giá trị dòng là i
+            cell.dataset.col = j;//gán giá trị cột là j
+            cell.style.width = "40px";//kích thước ô rộng
+            cell.style.height = "40px";//kích thước cao
+            cell.style.border = "1px solid #333";//border có kích thước 1px, màu solid #333
+            cell.style.display = "flex";//căn giữa
+            cell.style.alignItems = "center";//căn giữa
+            cell.style.justifyContent = "center";//căn giữa
+            cell.style.cursor = "pointer";//trỏ chuột thành bàn tay
+            cell.style.userSelect = "none";//không cho bôi đen chữ X hay O trong O
+            cell.style.fontSize = "20px";//kichs thước font
+            cell.style.background = "#fff";//màu background
 
-            cell.addEventListener("click", () => handleClickPvP(cell, i, j));
-            boardDivPvP.appendChild(cell);
+            cell.addEventListener("click", () => handleClickPvP(cell, i, j));//gắn sự kiện click cho từng ô
+            boardDivPvP.appendChild(cell);//thêm vào board
         }
     }
 }
 
 // ================= XỬ LÝ CLICK =================
 function handleClickPvP(cell, i, j) {
-    if (!gameStartedPvP) return;
-    if (cellsPvP[i][j] !== 0) return;
+    if (!gameStartedPvP) return;//nếu game chưa bắt đầu thì return 
+    if (cellsPvP[i][j] !== 0) return;//ô có quân cờ rồi thì không được đặt quân nào vào đó nữa
 
     $.ajax({
         url: "/GameWithHuman/MoveHuman",
@@ -53,7 +51,7 @@ function handleClickPvP(cell, i, j) {
 
                 renderBoardPvP(res.board);
 
-                // Cập nhật lượt đi
+                // Cập nhật lượt đi của người chơi tiếp theo 
                 currentPlayerPvP = res.currentPlayer;
                 document.getElementById("who").innerHTML =
                     "Lượt đi của: " +
@@ -70,16 +68,16 @@ function handleClickPvP(cell, i, j) {
                 if (res.isWin) {
 
                     // Tìm chuỗi 5 ô thắng để tô đỏ
-                    const win = findWinningLinePvP(res.board);
+                    const win = findWinningLinePvP(res.board);//tìm ra dòng theo điều kiện thắng trái phải xéo ngang
                     if (win) {
-                        renderBoardPvP(res.board, win.line);
+                        renderBoardPvP(res.board, win.line)//tô đỏ dòng thắng 
                     } else {
-                        renderBoardPvP(res.board);
+                        renderBoardPvP(res.board);//hiện bàn cờ bình thường không tô đỏ ô nào
                     }
 
 
-                    clearInterval(timerIdPvP);
-                    gameStartedPvP = false;
+                    clearInterval(timerIdPvP);//dừng thời gian
+                    gameStartedPvP = false;//trò chơi dừng lại 
 
                     let winnerSymbol =
                         res.winner === 1
@@ -87,21 +85,21 @@ function handleClickPvP(cell, i, j) {
                             : "<span style='color:blue;font-weight:bold;'>O</span>";
 
                     $("#winnerText").html("🎉 Người chơi " + winnerSymbol + " đã thắng!");
-                    $("#overlay").fadeIn();
+                    $("#overlay").fadeIn();//hiển thị kí hiệu x hoặc o (người thắng) và in ra thông báo
                 }
                 // Xử lý hòa
-                else if (res.isDraw) {
-                    clearInterval(timerIdPvP);
-                    gameStartedPvP = false;
+                else if (res.isDraw) {//bàn cờ hết cờ
+                    clearInterval(timerIdPvP);//dừng thời gian lại 
+                    gameStartedPvP = false;//kết thúc game 
 
                     $("#winnerText").text("🤝 Trận đấu hòa!");
-                    $("#overlay").fadeIn();
+                    $("#overlay").fadeIn();//in ra thông báo
                 }
             }
 
         },
         error: function () {
-            alert("❌ Lỗi Server");
+            alert("❌ Lỗi Server");//sever không phản hồi
         }
     });
 }
@@ -109,19 +107,19 @@ function handleClickPvP(cell, i, j) {
 // ================= VẼ QUÂN CỜ (hàm con được dùng trong renderBoardPvP) =================
 function renderCellPvP(el, val) {
     if (val === 1) {
-        el.textContent = "❌";
+        el.textContent = "❌";//quân cờ
         el.style.background = "#ffe6e6"; // đỏ nhạt
-        el.style.color = "red";
-        el.style.fontSize = "30px";
-        el.style.fontWeight = "bold";
-    } else if (val === 2) {
-        el.textContent = "O";
+        el.style.color = "red";//màu của quân cờ
+        el.style.fontSize = "30px";//kích thước quân cờ
+        el.style.fontWeight = "bold";//in đậm
+    } else if (val === 2) {//trả về giá trị 2
+        el.textContent = "O";//quân cờ
         el.style.background = "#cce0ff"; // 💙 xanh nhạt hơn
         el.style.color = "#0040ff";      // xanh đậm
-        el.style.fontSize = "30px";
+        el.style.fontSize = "30px";//kích thước quân cờ
         el.style.fontWeight = "bold";
     } else {
-        el.textContent = "";
+        el.textContent = "";//nếu ko có giá trị thì ô đó trống
         el.style.background = "#ffffff"; // trắng
     }
 }
@@ -129,43 +127,43 @@ function renderCellPvP(el, val) {
 
 // ================= VẼ QUÂN CỜ =================
 function renderBoardPvP(board, winningLine = null) {
-    const cells = boardDivPvP.children;
-    const winSet = new Set();
+    const cells = boardDivPvP.children;//danh sách ô trên bàn cờ
+    const winSet = new Set();//tập các ô thuộc các chuỗi thắng
 
     if (winningLine) {
-        winningLine.forEach(p => winSet.add(p.row + ',' + p.col));
+        winningLine.forEach(p => winSet.add(p.row + ',' + p.col));//neus thuộc chuỗi thắng thì thêm vào winset
     }
 
-    for (let i = 0; i < N_PvP; i++) {
-        for (let j = 0; j < N_PvP; j++) {
-            const idx = i * N_PvP + j;
-            const el = cells[idx];
+    for (let i = 0; i < N_PvP; i++) { //duyệt theo dòng
+        for (let j = 0; j < N_PvP; j++) {//duyệt theo cột
+            const idx = i * N_PvP + j;//tính chỉ số của ô
+            const el = cells[idx];//trà về chỉ số có vị trí cân tô
 
             // 🔹 Reset trước khi vẽ
-            el.style.background = "#fff";
-            el.style.color = "black";
-            el.style.fontWeight = "normal";
+            el.style.background = "#fff";//nền trắng
+            el.style.color = "black";//chữ đen
+            el.style.fontWeight = "normal";//phông thường
 
             // 🔹 Vẽ quân cờ
             renderCellPvP(el, board[i][j]);
 
             // 🔹 Nếu ô nằm trong chuỗi thắng → tô đỏ nổi bật
             if (winSet.has(i + ',' + j)) {
-                if (board[i][j] === 1) { // ❌
-                    el.style.background = "#e60000"; // đỏ tươi
-                    el.style.color = "#ffffff";
-                } else if (board[i][j] === 2) { // O
+                if (board[i][j] === 1) { // ❌ 
+                    el.style.background = "#e60000"; // màu nền đỏ tươi
+                    el.style.color = "#ffffff";//màu chữ
+                } else if (board[i][j] === 2) { // O 
                     el.style.background = "#0040ff"; // xanh đậm
-                    el.style.color = "#ffffff";
+                    el.style.color = "#ffffff";//màu chữ
                 }
-                el.style.fontWeight = "bold";
-                el.style.transition = "background 0.3s ease";
+                el.style.fontWeight = "bold";//chữ in đậm
+                el.style.transition = "background 0.3s ease";//hiệu ứng chuyển màu 
             }
         }
     }
 
     // 🔹 Thêm hiệu ứng nhấp nháy đỏ nếu có chuỗi thắng
-    if (winningLine) {
+    if (winningLine) {//nếu là chuôi thắng
         let blink = true;
         const blinkInterval = setInterval(() => {
             winningLine.forEach(p => {
