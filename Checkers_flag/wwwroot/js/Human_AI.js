@@ -1,6 +1,6 @@
 ﻿// ================== CONFIG ==================
 // Kích thước bàn cờ
-const N = 10;
+const N = 15;
 // Tạo ma trận lưu trạng thái bàn cờ (0 = trống, 1 = người, 2 = AI)
 const cells = Array.from({ length: N }, () => Array(N).fill(0));
 // Lượt chơi hiện tại (1 = người, 2 = AI)
@@ -9,9 +9,6 @@ let currentPlayer = 1;
 let gameStarted = false;
 // Biến timer
 let timerId = null;
-// Thời gian còn lại mỗi lượt (giây)
-let timeLeft = 30;
-
 // Lấy div hiển thị bàn cờ trong HTML (id="board")
 const boardDiv = document.getElementById("board");
 
@@ -20,7 +17,7 @@ const boardDiv = document.getElementById("board");
 function createBoard() {
     boardDiv.innerHTML = ""; // Xóa hết nội dung bàn cờ cũ nếu có
     //Duyệt qua tất  cả hàng và cột để tao ô cờ
-    for (let i = 0; i < N; i++) { 
+    for (let i = 0; i < N; i++) {
         for (let j = 0; j < N; j++) {
             const cell = document.createElement("div");// tạo thẻ div đại diênj cho ô cờ
             cell.className = "cell";
@@ -30,8 +27,8 @@ function createBoard() {
             // ================== STYLE Ô ==================
             //Đặt kích thước, đường viền ,màu nền, căn giữa cho tuwfng ô cờ
             Object.assign(cell.style, {
-                width: "50px",
-                height: "50px",
+                width: "40px",
+                height: "40px",
                 border: "1px solid #333",
                 display: "flex",
                 alignItems: "center",
@@ -113,7 +110,7 @@ function handleClick(i, j) {
     isAITurn = true;
 
     // Cập nhật text ngay khi AI chuẩn bị đi
-    $("#who").html("Lượt đi của: <span style='font-weight:bold; color:blue'>O</span> (AI đang tính...)");
+    $("#who").html("Lượt đi của: <span style='font-weight:bold; color:blue'>O</span> (AI Suy nghĩ...)");
 
     // Gửi nước đi của người chơi lên server
     $.post("/GameWithAI/Move", { row: i, col: j }, function (res) {
@@ -152,7 +149,7 @@ function updateBoardFromServer(res) {
             // Nếu chưa thắng, nước đi cuối luôn là AI vì người đi trước đã render
             value = 2;
         }
-            //Gán giá trị và vẽ lại bàn
+        //Gán giá trị và vẽ lại bàn
         cells[row][col] = value;
 
         // Render lại bàn với highlight nước đi cuối
@@ -162,35 +159,109 @@ function updateBoardFromServer(res) {
 
 
 // ================== TIMER ==================
-// Bắt đầu countdown mỗi lượt 30s
-function startTimer() {
-    clearInterval(timerId); // Reset lại timer cũ nếu đang chạy
-    timeLeft = 30; // đặt lại thời gian bộ đém là 30s
+let timerIdPvP = null;
+let timeLeftPlayer1 = 300; // 5 phút cho người chơi 1
+let timeLeftPlayer2 = 300; // 5 phút cho người chơi 2
+let currentPlayerPvP = 1; // bắt đầu từ người chơi 1
 
-    timerId = setInterval(() => {
-        timeLeft--;
-        $("#time").text("Time: " + timeLeft + " s");//hiển thị thời gian còn lại(đếm ngược 30s)
+function startTimerPvP() {
+    clearInterval(timerIdPvP);
 
-        if (timeLeft <= 0) {
-            clearInterval(timerId);//nếu bộ đếm về 0 thì dừng đếm
-
-            if (currentPlayer === 1) {
-                // Người chơi hết giờ ->Chuyển lượt qua AI ->  AI random nước đi
-                const move = getRandomAIMove(cells);
-                if (move) {
-                    cells[move.row][move.col] = 2;//néu AI có nước đi thì gán vào mảng
-                    renderBoard(cells, move);//vẽ lại nước đi của AI ở vị trí đó
-                    switchTurn(1); // Trả lượt về người
-                }
-            } else {
-                // AI hết giờ (trường hợp đặc biệt) -> trả lượt về người
-                switchTurn(1);
-            }
+    timerIdPvP = setInterval(() => {
+        if (currentPlayerPvP === 1 && timeLeftPlayer1 > 0) {
+            timeLeftPlayer1--;
+        } else if (currentPlayerPvP === 2 && timeLeftPlayer2 > 0) {
+            timeLeftPlayer2--;
         }
+
+        // hiển thị thời gian của hai người chơi
+        $("#timePlayerA").text("❌: " + formatTime(timeLeftPlayer1));
+        $("#timePlayerB").html("<span style='color:blue;font-weight:bold;'>O</span>: " + formatTime(timeLeftPlayer2));
+
+        // kiểm tra hết giờ
+        if (timeLeftPlayer1 <= 0 || timeLeftPlayer2 <= 0) {
+            clearInterval(timerIdPvP);
+
+            if (currentPlayerPvP === 1) {
+                $("#who").text("❌ Hết giờ! Người chơi ❌ thua!");
+                $("#winnerText").html("Hết giờ! ⏱️,  Người chơi <span style='color:blue;font-weight:bold;'>O</span>  đã thắng!");
+                $("#overlay").fadeIn();
+            } else {
+                $("#who").html("<span style='color:blue;font-weight:bold;'>O</span> Hết giờ! Người chơi O thua!");
+                $("#winnerText").html("Hết giờ! ⏱️,  Người chơi ❌  đã thắng!");
+                $("#overlay").fadeIn();
+
+            }
+
+            // có thể thêm reset sau vài giây
+            setTimeout(() => {
+                resetTimerPvP();
+            }, 3000);
+        }
+
+
+        // tô màu cảnh báo
+        highlightTime();
     }, 1000);
 }
 
-let isAITurn = false; // true nếu AI đang đi
+function changeTurn() {
+    currentPlayerPvP = currentPlayerPvP === 1 ? 2 : 1;
+    document.getElementById("who").innerHTML =
+        "Lượt đi của: " +
+        (currentPlayerPvP === 1
+            ? "❌"
+            : "<span style='color:blue;font-weight:bold;'>O</span>");
+}
+
+function formatTime(seconds) {
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+}
+
+function highlightTime() {
+    const currentTime = currentPlayerPvP === 1 ? timeLeftPlayer1 : timeLeftPlayer2;
+
+    if (currentPlayerPvP === 1) {
+        // tô màu người chơi A
+        if (currentTime < 10) {
+            $("#timePlayerA").removeClass("alert-primary alert-warning").addClass("alert-danger");
+        } else if (currentTime < 30) {
+            $("#timePlayerA").removeClass("alert-primary alert-danger").addClass("alert-warning");
+        } else {
+            $("#timePlayerA").removeClass("alert-warning alert-danger").addClass("alert-primary");
+        }
+        // giữ nguyên màu cho người B
+        $("#timePlayerB").removeClass("alert-warning alert-danger").addClass("alert-primary");
+
+    } else {
+        // tô màu người chơi B
+        if (currentTime < 10) {
+            $("#timePlayerB").removeClass("alert-primary alert-warning").addClass("alert-danger");
+        } else if (currentTime < 30) {
+            $("#timePlayerB").removeClass("alert-primary alert-danger").addClass("alert-warning");
+        } else {
+            $("#timePlayerB").removeClass("alert-warning alert-danger").addClass("alert-primary");
+        }
+        // giữ nguyên màu cho người A
+        $("#timePlayerA").removeClass("alert-warning alert-danger").addClass("alert-primary");
+    }
+}
+
+function resetTimerPvP() {
+    clearInterval(timerIdPvP);
+    timeLeftPlayer1 = 300;
+    timeLeftPlayer2 = 300;
+    currentPlayerPvP = 1;
+
+    $("#timePlayerA").text("❌: " + formatTime(timeLeftPlayer1))
+        .removeClass("alert-danger alert-warning").addClass("alert-primary");
+    $("#timePlayerB").html("<span style='color:blue;font-weight:bold;'>O</span>: " + formatTime(timeLeftPlayer2))
+        .removeClass("alert-danger alert-warning").addClass("alert-primary");
+
+    $("#who").text("Nhấn Bắt đầu để chơi lại");
+}
 
 // ================== SWITCH TURN ==================
 function switchTurn(nextPlayer) {
@@ -201,7 +272,7 @@ function switchTurn(nextPlayer) {
         // Lượt người
         $("#who").text("Lượt đi hiện tại: ❌ (Người)");// cập nhật text thuộc về người
         isAITurn = false;// mở khóa lượt người
-        startTimer();// bắt đầu đếm ngược 30s cho người
+        startTimerPvP();// bắt đầu đếm ngược 30s cho người
     } else {
         // Lượt AI
         isAITurn = true;// khóa lượt người
@@ -215,44 +286,64 @@ function switchTurn(nextPlayer) {
 
             // Sau khi AI đi xong, trả lượt người
             switchTurn(1);
-        }, 1000); // delay AI
+        }, 2000); // delay AI
     }
 }
 // ================== START GAME ==================
 $("#btnStart").click(function (e) {//bắt sự kiện click vào nút start
     e.stopPropagation();//ngăn sự kiện lkan truyền ra ngoài phần tử hiện tại
+
+    $("#fight").fadeIn();
+
+
     const selected = $('input[name="firstPlayer"]:checked').val();//lấy người đi trước từ radbtn
     currentPlayer = parseInt(selected);
     // Gọi API khởi tạo game mới trên server
+
+    
     $.get("/GameWithAI/ResetGame?firstPlayer=" + currentPlayer, function (res) {
         if (!res.success) return;
+
+
         resetBoard() //làm mới bàn cờ
+
         createBoard();//tạo bàn cờ mới
 
+    
         if (res.lastMove && currentPlayer === 2) {
             // AI đi trước -> server trả về nước đi của AI
             const { row, col } = res.lastMove;
             cells[row][col] = 2; // chỉ lưu, chưa render
 
-            $("#who").html("Lượt đi hiện tại: <span style='font-weight:bold; color:blue'>O</span> (AI đang tính...)");
+            $("#who").html("Lượt đi hiện tại: <span style='font-weight:bold; color:blue'>O</span> (AI suy nghĩ...)");
             isAITurn = true;// khóa lượt người
 
-            // Delay 2 giây mới hiển thị nước đi của AI(render 0)
+            // Sau 2 giây mới render nước đi và bắt đầu đếm giờ
             setTimeout(() => {
-                renderBoard(cells, res.lastMove); // bây giờ mới hiển thị O
-                switchTurn(1); // trả lượt cho người
+                $("#fight").fadeOut();
+
+                createBoard();
+                renderBoard(cells, res.lastMove);
+                switchTurn(1);
                 isAITurn = false;
+                startTimerPvP(); // chỉ bắt đầu timer tại đây
             }, 2000);
         } else {
-            updateBoardFromServer(res); // nếu người đi trước, render ngay
-            switchTurn(currentPlayer);//đổi lượt chơi
+            // Người đi trước
+            $("#fight").fadeOut();
+            updateBoardFromServer(res);
+            switchTurn(currentPlayer);
+            startTimerPvP(); // bắt đầu ngay
         }
+
+
         //cập nhật giao diện sau khi bắt đầu
         gameStarted = true;
         $("#start").hide();
         $("#who").addClass("show");
         $("#end").show();
         $("#board").addClass("show");
+
     });
 });
 // ================== END GAME ==================
@@ -283,11 +374,12 @@ $("#endgame").click(function (e) {// bắt sự kiện click vào nút kết th�
             $("#btnStart").click();//bắt đầu lại trò chơi
             window.location.reload();// tải lại trang
         }, 1000);
+
     });
 
     // nếu chọn kết thúc
     $("#btnEndGame").click(function () {// bắt sự kiện click vào nút kết thúc
-        $("#overlayCancel").fadeOut();     
+        $("#overlayCancel").fadeOut();
         gameStarted = true;// mở lại trò chơi
     });
 });
@@ -328,13 +420,12 @@ function resetBoard() {
     boardDiv.innerHTML = "";
 
     // 3. Reset các biến trạng thái
-    currentPlayer = 1;   // mặc định người đi trước
+    //currentPlayer = 1;   // mặc định người đi trước
     gameStarted = false;   // trò chơi chưa bắt đầu
     isAITurn = false;// mở khóa lượt người
     clearInterval(timerId);// dừng timer nếu đang chạy
-    timeLeft = 30;// đặt lại thời gian bộ đếm là 30s cho lượt mới
-
+    resetTimerPvP();
     // 4. Reset hiển thị timer và lượt chơi
-    $("#time").text("Time: 30 s");// hiển thị thời gian mặc định
+    //$("#time").text("Time: 30 s");// hiển thị thời gian mặc định
     $("#who").text("Lượt đi hiện tại: ❌ (Người)");// hiển thị lượt đi là người
 }

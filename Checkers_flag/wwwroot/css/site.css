@@ -19,7 +19,7 @@
 
 #board {
     display: grid;
-    grid-template-columns: repeat(10, 50px);
+    grid-template-columns: repeat(15, 40px);
     border: 5px solid #deb887;
     box-shadow: 0 0 15px;
     border-radius: 5px;

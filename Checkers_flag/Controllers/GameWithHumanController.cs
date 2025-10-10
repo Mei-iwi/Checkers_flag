@@ -35,8 +35,8 @@ namespace Checkers_flag.Controllers
 
         //Khởi tạo List hai chiều có phạm vi 10 * 10
         // Bàn cờ 10x10, 0 = trống, 1 = người chơi 1, 2 = người chơi 2
-        private static List<List<int>> Board = Enumerable.Range(0, 10) //-> Taọ 10 hàng
-                          .Select(r => Enumerable.Repeat(0, 10).ToList()) //-> Mỗi hàng lặp lại 10 cột -> Đưa về danh sách
+        private static List<List<int>> Board = Enumerable.Range(0, 15) //-> Taọ 10 hàng
+                          .Select(r => Enumerable.Repeat(0, 15).ToList()) //-> Mỗi hàng lặp lại 10 cột -> Đưa về danh sách
                           .ToList(); //Gộp lại thành danh sách 2 chiều
 
         //Khởi tạo người chơi mặc định là người chơi 1
@@ -131,8 +131,8 @@ namespace Checkers_flag.Controllers
             Board.Clear();
 
             //Khởi tạo lại bảng mới
-            Board = Enumerable.Range(0, 10)
-                              .Select(r => Enumerable.Repeat(0, 10).ToList())
+            Board = Enumerable.Range(0, 15)
+                              .Select(r => Enumerable.Repeat(0, 15).ToList())
                               .ToList();
 
             //Khởi tạo lượt đánh mặc định

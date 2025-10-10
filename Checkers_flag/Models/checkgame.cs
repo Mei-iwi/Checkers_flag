@@ -15,8 +15,9 @@ namespace Checkers_flag.Models
 
         //Phương thức khởi tạo ma trận  10x10 hoặc từ bàn cờ có sẵn
         public Checkgame()
+
         {
-            a = new int[10, 10]; //khởi tạo thành ma trận 2 chiều có kích thước 10x10
+            a = new int[15, 15]; //khởi tạo thành ma trận 2 chiều có kích thước 10x10
         }
 
         //Phương thức khởi tạo có tham số nhận vào một ma trận bất kì (sẽ nâng cấp sau)

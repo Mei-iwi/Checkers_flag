@@ -10,7 +10,7 @@ namespace Checkers_flag.Controllers
     public class GameWithAIController : Controller
     {
         //Khởi tạo ma trận 10 * 10 cho trò chơi
-        private static int[,] board = new int[10, 10];
+        private static int[,] board = new int[15, 15];
 
         //Tạo đối tượng minimaxAI
         private Minimax_Algorithm minimaxAI = new Minimax_Algorithm();
@@ -23,7 +23,7 @@ namespace Checkers_flag.Controllers
         [HttpGet]
         public IActionResult ResetGame(int firstPlayer = 1)
         {
-            int N = 10; // kích thước bàn cờ
+            int N = 15; // kích thước bàn cờ
             board = new int[N, N]; // làm mới bàn cờ
             currentPlayer = firstPlayer; // thiết lập người chơi đầu tiên la người chơi 1(Người)
             object lastMove = null; //lưu lại nước đi cuối cùng
@@ -33,18 +33,24 @@ namespace Checkers_flag.Controllers
             {
                 var rnd = new Random();
                 int aiRow, aiCol;
+
+                // Chỉ chọn trong ô 3x3 giữa bàn cờ 15x15
+                int start = N / 2 - 1; // = 15/2 - 1 = 6
+                int end = N / 2 + 1;   // = 7 + 1 = 8
+
                 do
                 {
-                    aiRow = rnd.Next(0, N);
-                    aiCol = rnd.Next(0, N);
-                } while (board[aiRow, aiCol] != 0);// Lặp đén khi tìm được ô trống
+                    aiRow = rnd.Next(start, end + 1); // [6, 8]
+                    aiCol = rnd.Next(start, end + 1); // [6, 8]
+                } while (board[aiRow, aiCol] != 0); // Tìm ô trống
 
                 board[aiRow, aiCol] = 2; // AI đánh quân cờ
                 lastMove = new { row = aiRow, col = aiCol };
 
-                // Sau khi AI đi thì đến lượt người chơi
                 currentPlayer = 1;
             }
+
+
 
             // Trả kết quả khởi tạo về client (AJAX)
             return Json(new

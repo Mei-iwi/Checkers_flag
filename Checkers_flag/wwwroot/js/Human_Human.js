@@ -1,12 +1,9 @@
-﻿const N_PvP = 10;
+﻿const N_PvP = 15;
 const cellsPvP = Array.from({ length: N_PvP }, () => Array(N_PvP).fill(0));
-let currentPlayerPvP = 1;
 let gameStartedPvP = false;
 
 const boardDivPvP = document.getElementById("board");
 
-let timeLeftPvP = 10;
-let timerIdPvP = null;
 
 // ================= TẠO BÀN CỜ =================
 function createBoardPvP() {
@@ -17,8 +14,8 @@ function createBoardPvP() {
             cell.className = "cell";
             cell.dataset.row = i;
             cell.dataset.col = j;
-            cell.style.width = "50px";
-            cell.style.height = "50px";
+            cell.style.width = "40px";
+            cell.style.height = "40px";
             cell.style.border = "1px solid #333";
             cell.style.display = "flex";
             cell.style.alignItems = "center";
@@ -130,47 +127,122 @@ function renderBoardPvP(board) {
 }
 
 // ================= TIMER =================
+let timerIdPvP = null;
+let timeLeftPlayer1 = 300; // 5 phút cho người chơi 1
+let timeLeftPlayer2 = 300; // 5 phút cho người chơi 2
+let currentPlayerPvP = 1; // bắt đầu từ người chơi 1
+
 function startTimerPvP() {
     clearInterval(timerIdPvP);
-    timeLeftPvP = 11;
 
     timerIdPvP = setInterval(() => {
-        timeLeftPvP--;
-
-        if (timeLeftPvP < 4) {
-            $("#time").removeClass("alert-primary alert-warning").addClass("alert-danger");
-        } else if (timeLeftPvP < 6) {
-            $("#time").removeClass("alert-primary alert-danger").addClass("alert-warning");
-        } else {
-            $("#time").removeClass("alert-warning alert-danger").addClass("alert-primary");
+        if (currentPlayerPvP === 1 && timeLeftPlayer1 > 0) {
+            timeLeftPlayer1--;
+        } else if (currentPlayerPvP === 2 && timeLeftPlayer2 > 0) {
+            timeLeftPlayer2--;
         }
 
-        if (timeLeftPvP == 0) {
-            setTimeout(() => {
-                $("#time").text("Đổi lượt");
-            }, 200);
-        }
+        // hiển thị thời gian của hai người chơi
+        $("#timePlayerA").text("❌: " + formatTime(timeLeftPlayer1));
+        $("#timePlayerB").html("<span style='color:blue;font-weight:bold;'>O</span>: " + formatTime(timeLeftPlayer2));
 
-        $("#time").text("Time: " + timeLeftPvP + " s");
-
-        if (timeLeftPvP <= 0) {
+        // kiểm tra hết giờ
+        if (timeLeftPlayer1 <= 0 || timeLeftPlayer2 <= 0) {
             clearInterval(timerIdPvP);
-            currentPlayerPvP = currentPlayerPvP === 1 ? 2 : 1;
-            document.getElementById("who").innerHTML =
-                "Lượt đi của: " +
-                (currentPlayerPvP === 1
-                    ? "❌"
-                    : "<span style='color:blue;font-weight: bold;'>O</span>");
-            startTimerPvP();
+
+            if (currentPlayerPvP === 1) {
+                $("#who").text("❌ Hết giờ! Người chơi ❌ thua!");
+                $("#winnerText").html("Hết giờ! ⏱️,  Người chơi <span style='color:blue;font-weight:bold;'>O</span>  đã thắng!");
+                $("#overlay").fadeIn();
+            } else {
+                $("#who").html("<span style='color:blue;font-weight:bold;'>O</span> Hết giờ! Người chơi O thua!");
+                $("#winnerText").html("Hết giờ! ⏱️,  Người chơi ❌  đã thắng!");
+                $("#overlay").fadeIn();
+
+            }
+
+            // có thể thêm reset sau vài giây
+            setTimeout(() => {
+                resetTimerPvP();
+            }, 3000);
         }
+
+
+        // tô màu cảnh báo
+        highlightTime();
     }, 1000);
 }
+
+function changeTurn() {
+    currentPlayerPvP = currentPlayerPvP === 1 ? 2 : 1;
+    document.getElementById("who").innerHTML =
+        "Lượt đi của: " +
+        (currentPlayerPvP === 1
+            ? "❌"
+            : "<span style='color:blue;font-weight:bold;'>O</span>");
+}
+
+function formatTime(seconds) {
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+}
+
+function highlightTime() {
+    const currentTime = currentPlayerPvP === 1 ? timeLeftPlayer1 : timeLeftPlayer2;
+
+    if (currentPlayerPvP === 1) {
+        // tô màu người chơi A
+        if (currentTime < 10) {
+            $("#timePlayerA").removeClass("alert-primary alert-warning").addClass("alert-danger");
+        } else if (currentTime < 30) {
+            $("#timePlayerA").removeClass("alert-primary alert-danger").addClass("alert-warning");
+        } else {
+            $("#timePlayerA").removeClass("alert-warning alert-danger").addClass("alert-primary");
+        }
+        // giữ nguyên màu cho người B
+        $("#timePlayerB").removeClass("alert-warning alert-danger").addClass("alert-primary");
+
+    } else {
+        // tô màu người chơi B
+        if (currentTime < 10) {
+            $("#timePlayerB").removeClass("alert-primary alert-warning").addClass("alert-danger");
+        } else if (currentTime < 30) {
+            $("#timePlayerB").removeClass("alert-primary alert-danger").addClass("alert-warning");
+        } else {
+            $("#timePlayerB").removeClass("alert-warning alert-danger").addClass("alert-primary");
+        }
+        // giữ nguyên màu cho người A
+        $("#timePlayerA").removeClass("alert-warning alert-danger").addClass("alert-primary");
+    }
+}
+
+function resetTimerPvP() {
+    clearInterval(timerIdPvP);
+    timeLeftPlayer1 = 300;
+    timeLeftPlayer2 = 300;
+    currentPlayerPvP = 1;
+
+    $("#timePlayerA").text("❌: " + formatTime(timeLeftPlayer1))
+        .removeClass("alert-danger alert-warning").addClass("alert-primary");
+    $("#timePlayerB").html("<span style='color:blue;font-weight:bold;'>O</span>: " + formatTime(timeLeftPlayer2))
+        .removeClass("alert-danger alert-warning").addClass("alert-primary");
+
+    $("#who").text("Nhấn Bắt đầu để chơi lại");
+}
+
 
 // ================= NÚT BẮT ĐẦU =================
 $("#btn-humman").click(function (e) {
     e.stopPropagation();
+
+    $("#fight").fadeIn();
+
+
     const selected = $('input[name="firstPlayer"]:checked').val();
     currentPlayerPvP = parseInt(selected);
+
+   
     gameStartedPvP = true;
 
     $.get("/GameWithHuman/ResetGame", function (res) {
@@ -187,12 +259,17 @@ $("#btn-humman").click(function (e) {
             (currentPlayerPvP === 1
                 ? "❌"
                 : "<span style='color:blue;font-weight: bold;'>O</span>");
-        startTimerPvP();
 
         $("#start").hide();
         $("#who").addClass("show");
         $("#end").show().css("display", "flex");
         $("#board").addClass("show");
+
+        // chỉ bắt đầu timer sau khi hiệu ứng "Fight ⚔" kết thúc
+        setTimeout(function () {
+            $("#fight").fadeOut();
+            startTimerPvP(); // bắt đầu đếm giờ ở đây
+        }, 2000);
     });
 });
 
@@ -206,7 +283,9 @@ $("#endgame").click(function (e) {
 
     $("#btnReplayCancel").click(function (event) {
         event.stopPropagation();
-        $("#CancelGame").text("Người kia Thắng");
+
+        (currentPlayerPvP === 1) ? $("#CancelGame").html("<span style='color:blue;font-weight:bold;'>Người chơi O thắng</span>") : $("#CancelGame").html("Người chơi ❌ thắng");
+
 
         $("#btnReplayCancel").hide();
         $("#btnEndGame").hide();
@@ -218,6 +297,7 @@ $("#endgame").click(function (e) {
             $("#start").show();
             $("#btnReplayCancel").show();
             $("#btnEndGame").show();
+            resetTimerPvP();
         }, 2000);
     });
 
