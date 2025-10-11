@@ -256,7 +256,7 @@ function changeTurn() {
 }
 
 function formatTime(seconds) {//tính số phút
-    const m = Math.floor(seconds / 60);.//tính số phút
+    const m = Math.floor(seconds / 60);//tính số phút
     const s = seconds % 60;//tính số giây còn dư
     return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;//hiển thị ít nhất hai số
 }
@@ -409,7 +409,7 @@ function findWinningLinePvP(board) {
                 let line = [{ row: i, col: j }];//lưu vị trí liên tiếp của người chơi
                 for (let k = 1; k < 5; k++) {//kiểm tra bốn ô theo hướng dir
                     const r = i + dir.dr * k;// tính vị trí dòng theo hướng dir
-                    const c = j + dir.dc * k;.// tính vị trí cột theo hướng dir
+                    const c = j + dir.dc * k;// tính vị trí cột theo hướng dir
                     if (
                         r < 0 || r >= N_PvP || c < 0 || c >= N_PvP ||//kiểm tra vị trí mới có nằm ngoài bàn cờ không
                         board[r][c] !== player//ô tiếp theo k liên tiếp ngưng kiểm tra theo hướng đó
