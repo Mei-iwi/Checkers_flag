@@ -156,26 +156,35 @@ function handleClick(i, j) {
 
     // Gửi nước đi của người chơi lên server
     $.post("/GameWithAI/Move", { row: i, col: j }, function (res) {
-        // nếu server trả về lỗi
         if (!res.success) {
             alert(res.message);
-            isAITurn = false; // mở lại lượt cho người nếu lỗi
-            $("#who").text("Lượt đi của: ❌ (Người)"); // reset text
+            isAITurn = false;
+            $("#who").text("Lượt đi của: ❌ (Người)");
             return;
         }
 
-        // Cập nhật nước đi từ server (AI vừa đi)
-        updateBoardFromServer(res);
-        //nếu ván đấu kết thúc
-        if (res.isWin || res.isDraw) {
-            endGame(res);
-        } else {
-            // Trả lượt cho AI nếu chưa kết thúc(hoặc AI đã đi xong)
-            switchTurn(res.currentPlayer);
-        }
+        // 🔹 BẮT ĐẦU LƯỢT AI — cho AI suy nghĩ và trừ thời gian
+        currentPlayerPvP = 2; // ⏱ gán đúng người đang bị trừ thời gian
+        startTimerPvP();      // bắt đầu đếm giờ cho AI
+
+        $("#who").html("Lượt đi của: <span style='font-weight:bold; color:blue'>O</span> (AI suy nghĩ...)");
+
+        // 🔹 Giả lập thời gian AI “suy nghĩ” 2s
+        setTimeout(() => {
+            updateBoardFromServer(res); // vẽ nước đi AI từ server
+
+            clearInterval(timerIdPvP); // ⏹ dừng timer AI sau khi đi xong
+
+            if (res.isWin || res.isDraw) {
+                endGame(res);
+            } else {
+                // 🔁 Trả lượt cho người chơi
+                currentPlayerPvP = 1;
+                switchTurn(1);
+            }
+        }, 2000);
     });
 }
-
 // ================== CẬP NHẬT BÀN TỪ SERVER ==================
 // Nhận kết quả từ server và cập nhật bàn cờ
 function updateBoardFromServer(res) {
@@ -322,13 +331,19 @@ function switchTurn(nextPlayer) {
     currentPlayer = nextPlayer;// chuyển lượt chơi sang người chơi tiếp theo
 
     if (currentPlayer === 1) {
+        currentPlayerPvP = 1;
         // Lượt người
         $("#who").text("Lượt đi hiện tại: ❌ (Người)");// cập nhật text thuộc về người
         isAITurn = false;// mở khóa lượt người
         startTimerPvP();// bắt đầu đếm ngược 30s cho người
     } else {
+
+        currentPlayerPvP = 2;
+
         // Lượt AI
         isAITurn = true;// khóa lượt người
+        $("#who").html("Lượt đi hiện tại: <span style='font-weight:bold; color:blue'>O</span> (AI suy nghĩ...)");
+        startTimerPvP();
 
         setTimeout(() => {  // Delay AI
             const move = getRandomAIMove(cells); // Chon nước đi ngẫu nhiên(hoặc từ server)
@@ -336,6 +351,7 @@ function switchTurn(nextPlayer) {
                 cells[move.row][move.col] = 2;// gán vào mảng
                 renderBoard(cells, move);// vẽ lại bàn với nước đi của AI
             }
+            clearInterval(timerId);//   dừng timer cũ
 
             // Sau khi AI đi xong, trả lượt người
             switchTurn(1);
