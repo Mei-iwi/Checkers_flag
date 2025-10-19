@@ -176,7 +176,15 @@ function handleClick(i, j) {
             clearInterval(timerIdPvP); // ⏹ dừng timer AI sau khi đi xong
 
             if (res.isWin || res.isDraw) {
-                endGame(res);
+                // ⏳ Sau 2 giây xử lý endGame
+                setTimeout(() => {
+                    endGame(res);
+                }, 2000);
+
+                // ⏳ Sau 5 giây mới hiện popup
+                setTimeout(() => {
+                    $("#overlay").fadeIn();
+                }, 5000);
             } else {
                 // 🔁 Trả lượt cho người chơi
                 currentPlayerPvP = 1;
@@ -425,7 +433,7 @@ function endGame(res) {
         ? `🎉 Người chơi ${res.winner === 1 ? "❌" : "O"} thắng!`
         : "🤝 Hòa!";
     $("#winnerText").text(msg);
-    $("#overlay").fadeIn();//hiện popup kết thúc
+   // $("#overlay").fadeIn();
 }
 
 // ================== REPLAY / CANCEL ==================

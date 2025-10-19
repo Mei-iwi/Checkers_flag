@@ -85,7 +85,9 @@ function handleClickPvP(cell, i, j) {
                             : "<span style='color:blue;font-weight:bold;'>O</span>";
 
                     $("#winnerText").html("🎉 Người chơi " + winnerSymbol + " đã thắng!");
-                    $("#overlay").fadeIn();//hiển thị kí hiệu x hoặc o (người thắng) và in ra thông báo
+                    setTimeout(() => {
+                        $("#overlay").fadeIn();//hiển thị kí hiệu x hoặc o (người thắng) và in ra thông báo
+                    },5000)
                 }
                 // Xử lý hòa
                 else if (res.isDraw) {//bàn cờ hết cờ
