@@ -31,7 +31,7 @@ namespace Checkers_flag.Models
         // Đếm số chuỗi liên tiếp của 'player' có độ dài 'length' đi qua ô (row, col) 
         int CountLine(int row, int col, int player, int length)
         {
-            int score = 0;//tạo biến luuw kết quả
+            int score = 0;//tạo biến lưu kết quả
             int N = a.GetLength(0);//Kích thước của bàn cờ có giá trị N
             // Các hướng: ngang, dọc(1,0), chéo chính(1,1), chéo phụ(1,-1)
             int[][] directions = new int[][]
@@ -127,7 +127,7 @@ namespace Checkers_flag.Models
         {
             int count = 1; // tính cả ô hiện tại
             int openEnds = 0;//khoảng trống giữa hai số đầu mở
-            int N = a.GetLength(0);//giá trị của bàn cờ vd bàn cờ có độ rộng là 5x5 
+            int N = a.GetLength(0);//giá trị của bàn cờ vd bàn cờ có độ rộng là 15x15 
 
             // Kiểm tra 1 hướng 
             int r = row + dx, c = col + dy;//
@@ -225,7 +225,7 @@ namespace Checkers_flag.Models
             for (int i = 0; i < N; i++)//duyệt theo hàng
                 for (int j = 0; j < N; j++)//duyệt theo cột
                     // Chỉ xét các ô trống (0) có quân cờ lân cận trong khoảng cách 2 
-                    if (a[i, j] == 0 && HasNeighbor(i, j, 2))//kiểm tra ô trống dòng i,cột j và ô này phải có ít nhất một quân cờ(của bạn hoặc đối thủ) nằm trong phạm vi 2 ô xung quanh
+                    if (a[i, j] == 0 && HasNeighbor(i, j, 2))//kiểm tra ô trống dòng i,cột j và ô này phải có ít nhất một quân cờ (của bạn hoặc đối thủ) nằm trong phạm vi 2 ô xung quanh
                         
                         moves.Add((i, j));//thêm a[i][j] vào move
 

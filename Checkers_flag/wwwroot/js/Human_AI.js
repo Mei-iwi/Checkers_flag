@@ -150,6 +150,9 @@ function handleClick(i, j) {
 
     // Khóa lượt người(chờ AI đi)
     isAITurn = true;
+    currentPlayerPvP = 2; // ⏱ gán đúng người đang bị trừ thời gian
+    startTimerPvP();      // bắt đầu đếm giờ cho AI
+
 
     // Cập nhật text ngay khi AI chuẩn bị đi
     $("#who").html("Lượt đi của: <span style='font-weight:bold; color:blue'>O</span> (AI Suy nghĩ...)");
@@ -164,33 +167,27 @@ function handleClick(i, j) {
         }
 
         // 🔹 BẮT ĐẦU LƯỢT AI — cho AI suy nghĩ và trừ thời gian
-        currentPlayerPvP = 2; // ⏱ gán đúng người đang bị trừ thời gian
-        startTimerPvP();      // bắt đầu đếm giờ cho AI
-
         $("#who").html("Lượt đi của: <span style='font-weight:bold; color:blue'>O</span> (AI suy nghĩ...)");
 
-        // 🔹 Giả lập thời gian AI “suy nghĩ” 2s
-        setTimeout(() => {
-            updateBoardFromServer(res); // vẽ nước đi AI từ server
+        updateBoardFromServer(res); // vẽ nước đi AI từ server
 
-            clearInterval(timerIdPvP); // ⏹ dừng timer AI sau khi đi xong
+        clearInterval(timerIdPvP); // ⏹ dừng timer AI sau khi đi xong
 
-            if (res.isWin || res.isDraw) {
-                // ⏳ Sau 2 giây xử lý endGame
-                setTimeout(() => {
-                    endGame(res);
-                }, 2000);
+        if (res.isWin || res.isDraw) {
+            // ⏳ Sau 2 giây xử lý endGame
+            setTimeout(() => {
+                endGame(res);
+            }, 2000);
 
-                // ⏳ Sau 5 giây mới hiện popup
-                setTimeout(() => {
-                    $("#overlay").fadeIn();
-                }, 5000);
-            } else {
-                // 🔁 Trả lượt cho người chơi
-                currentPlayerPvP = 1;
-                switchTurn(1);
-            }
-        }, 2000);
+            // ⏳ Sau 5 giây mới hiện popup
+            setTimeout(() => {
+                $("#overlay").fadeIn();
+            }, 5000);
+        } else {
+            // 🔁 Trả lượt cho người chơi
+            currentPlayerPvP = 1;
+            switchTurn(1);
+        }
     });
 }
 // ================== CẬP NHẬT BÀN TỪ SERVER ==================
@@ -433,7 +430,7 @@ function endGame(res) {
         ? `🎉 Người chơi ${res.winner === 1 ? "❌" : "O"} thắng!`
         : "🤝 Hòa!";
     $("#winnerText").text(msg);
-   // $("#overlay").fadeIn();
+    // $("#overlay").fadeIn();
 }
 
 // ================== REPLAY / CANCEL ==================

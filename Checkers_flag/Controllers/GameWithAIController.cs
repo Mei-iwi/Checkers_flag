@@ -103,14 +103,14 @@ namespace Checkers_flag.Controllers
 
             // Kiểm tra hòa(Khi toàn bộ bàn đã đầy)
             if (board.Cast<int>().All(x => x != 0))
-            // Nếu đúng → trả kết quả JSON báo hòa:
-            // - success = true → nước đi hợp lệ
-            // - board = bàn cờ hiện tại
-            // - currentPlayer = 0 → dừng lượt (vì đã kết thúc)
-            // - isDraw = true → đánh dấu là hòa
-            // - winner = 0 → không có người thắng
-            // - lastMove → nước đi cuối
-            // - message = "Hòa!" → hiển thị thông báo
+                // Nếu đúng → trả kết quả JSON báo hòa:
+                // - success = true → nước đi hợp lệ
+                // - board = bàn cờ hiện tại
+                // - currentPlayer = 0 → dừng lượt (vì đã kết thúc)
+                // - isDraw = true → đánh dấu là hòa
+                // - winner = 0 → không có người thắng
+                // - lastMove → nước đi cuối
+                // - message = "Hòa!" → hiển thị thông báo
                 return Json(new
                 {
                     success = true,
@@ -146,11 +146,30 @@ namespace Checkers_flag.Controllers
 
             // ================== 3. QUYẾT ĐỊNH NƯỚC ĐI TỐT NHẤT ==================
             //Ưu tiên nước tấn công có điểm cao nhất
+            //if (attackMoves.Count > 0)
+            //{
+            //    var bestAttack = attackMoves.OrderByDescending(x => x.score).First();
+            //    aiRow = bestAttack.i; aiCol = bestAttack.j;
+            //}
             if (attackMoves.Count > 0)
             {
-                var bestAttack = attackMoves.OrderByDescending(x => x.score).First();
-                aiRow = bestAttack.i; aiCol = bestAttack.j;
+                // Lấy 3 nước tấn công mạnh nhất
+                var topMoves = attackMoves.OrderByDescending(x => x.score).Take(3);
+                int bestVal = int.MinValue;
+                foreach (var move in topMoves)
+                {
+                    board[move.i, move.j] = 2;
+                    int eval = minimaxAI.minimax(3, false, int.MinValue, int.MaxValue, out _, out _);
+                    board[move.i, move.j] = 0;
+                    if (eval > bestVal)
+                    {
+                        bestVal = eval;
+                        aiRow = move.i;
+                        aiCol = move.j;
+                    }
+                }
             }
+
             //So sánh nước phòng thủ-> nếu cần ưu tiên chặn người chơi thắng
             if (defenseMoves.Count > 0)
             {
@@ -165,7 +184,7 @@ namespace Checkers_flag.Controllers
             // Nếu không tìm được nước đi phù hợp → dùng Minimax
             if (aiRow == -1 || aiCol == -1)
             {
-                minimaxAI.minimax(6, true, int.MinValue, int.MaxValue, out aiRow, out aiCol);
+                minimaxAI.minimax(4, true, int.MinValue, int.MaxValue, out aiRow, out aiCol);
             }
             // Đánh nước đi của AI
             if (aiRow >= 0 && aiCol >= 0)
