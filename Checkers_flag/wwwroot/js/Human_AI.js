@@ -166,6 +166,17 @@ function handleClick(i, j) {
             return;
         }
 
+
+        var info = document.getElementById("showStep");
+        var span = document.createElement("span");
+        span.textContent = `Nước đi người chơi: (${i}, ${j})`;
+        span.classList.add("hu-move");
+        info.appendChild(span);
+        info.appendChild(document.createElement("br"));
+
+        info.scrollTop = info.scrollHeight;
+
+
         // 🔹 BẮT ĐẦU LƯỢT AI — cho AI suy nghĩ và trừ thời gian
         $("#who").html("Lượt đi của: <span style='font-weight:bold; color:blue'>O</span> (AI suy nghĩ...)");
 
@@ -195,6 +206,15 @@ function handleClick(i, j) {
 function updateBoardFromServer(res) {
     if (res.lastMove) {
         const { row, col } = res.lastMove;
+
+        var info = document.getElementById("showStep");
+        var span = document.createElement("span");
+        span.textContent = `Nước đi AI: (${row}, ${col}) `;
+        span.classList.add("ai-move");
+        info.appendChild(span);
+        info.appendChild(document.createElement("br"));
+
+        info.scrollTop = info.scrollHeight;
 
         // Xác định nước đi cuối là của ai
         let value = 0;
@@ -383,6 +403,10 @@ $("#btnStart").click(function (e) {//bắt sự kiện click vào nút start
 
         createBoard();//tạo bàn cờ mới
 
+        var info = document.getElementById("showStep");
+        info.innerHTML = "";
+
+        $("#info").show();
 
         if (res.lastMove && currentPlayer === 2) {
             // AI đi trước -> server trả về nước đi của AI
@@ -401,6 +425,15 @@ $("#btnStart").click(function (e) {//bắt sự kiện click vào nút start
                 switchTurn(1);
                 isAITurn = false;
                 startTimerPvP(); // chỉ bắt đầu timer tại đây
+                var info = document.getElementById("showStep");
+                var span = document.createElement("span");
+                span.textContent = `Nước đi AI: (${row}, ${col}) `;
+                span.classList.add("ai-move");
+                info.appendChild(span);
+                info.appendChild(document.createElement("br"));
+
+                info.scrollTop = info.scrollHeight;
+
             }, 2000);
         } else {
             // Người đi trước
@@ -464,6 +497,7 @@ $("#btnReplay").click(function () {// bắt sự kiện click vào nút chơi l�
 });
 //nút thoát về trang chủ
 $("#btnEnd").click(function () {// bắt sự kiện click vào nút thoát về trang chủ
+    $("#info").hide();
     $("#overlay").fadeOut();
     location.href = "/";// chuyển về trang chủ
 });

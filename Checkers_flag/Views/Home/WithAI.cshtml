@@ -11,14 +11,16 @@
         transition: all 0.4s ease-in-out;
     }
 
-    #selectOption{
-        display:flex;
+    #selectOption {
+        display: flex;
         gap: 30px;
     }
-    .select{
-        background:white;
-        width:100px;
+
+    .select {
+        background: white;
+        width: 100px;
     }
+
     #outGame:hover {
         background-color: #0056b3;
         transform: scale(1.1);
@@ -29,16 +31,42 @@
         gap: 50px;
         cursor: pointer;
     }
-    #fight{
-        display:none;
+
+    #fight {
+        display: none;
         position: fixed;
-        left:50%;
-        top:50%;
+        left: 50%;
+        top: 50%;
         transform: translate(-50%,-50%);
         font-size: 100px;
-
     }
 
+    .showInfo {
+        position: fixed;
+        left: -30%;
+        top: -400px;
+        display:none;
+    }
+
+    .showStep {
+        white-space: pre-line;
+        overflow: auto;
+        height: 700px;
+        width: 450px;
+        display:none;
+        padding:15px;
+    }
+
+    .hu-move{
+        font-size:20px;
+        font-weight:bold;
+        color:red;
+    }
+    .ai-move{
+        font-size: 20px;
+        font-weight: bold;
+        color: blue;
+    }
 </style>
 <div class="container">
     <div class="background-board">
@@ -51,7 +79,7 @@
                 <div class="group-select">
                     <input type="radio" name="firstPlayer" value="1" checked />
                     <span class="text-danger select w-100">Người ❌</span>
-                  
+
                 </div>
                 <div class="group-select">
                     <input type="radio" name="firstPlayer" value="2" />
@@ -64,7 +92,7 @@
                     Quay lại
                 </button>
                 <button id="btnStart" class="btn btn-success btn-sm ml-3">
-                   BẮT ĐẦU CHƠI
+                    BẮT ĐẦU CHƠI
                 </button>
             </div>
         </div>
@@ -104,6 +132,22 @@
 
 </div>
 
+<div class="showInfo" id="info">
+    <button id="showInfo" class="btn btn-outline-primary text-light">Xem thông tin nước đi</button>
+    <div class="showStep bg-light" id="showStep"></div>
+</div>
+
 @section Scripts {
     <script src="~/js/Human_AI.js"></script>
+    <script>
+        var btn = document.getElementById("showInfo");
+        var btn = document.getElementById("showInfo");
+        btn.addEventListener("click", function () {
+            $("#showStep").fadeToggle(); // ẩn nếu đang hiện, hiện nếu đang ẩn
+        });
+        $("#showInfo button").on("click", function () {
+            $("#showStep").fadeToggle();
+        });
+
+    </script>
 }

@@ -50,7 +50,6 @@ function handleClickPvP(cell, i, j) {
                 }
 
                 renderBoardPvP(res.board);
-
                 // Cập nhật lượt đi của người chơi tiếp theo 
                 currentPlayerPvP = res.currentPlayer;
                 document.getElementById("who").innerHTML =
