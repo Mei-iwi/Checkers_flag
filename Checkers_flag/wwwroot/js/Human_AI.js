@@ -237,6 +237,16 @@ function updateBoardFromServer(res) {
             // Tô đỏ 5 ô thắng và hiển thị thông báo
             renderBoard(cells, res.lastMove, win.line);
             $("#winnerText").text(`🎉 Người chơi ${win.player === 1 ? "❌" : "O"} thắng!`);
+
+            var info = document.getElementById("showStep");
+            var span = document.createElement("span");
+            span.textContent = `Người chơi ${win.player === 1 ? "❌" : "O"} thắng! `;
+            span.classList.add("win");
+            info.appendChild(span);
+            info.appendChild(document.createElement("br"));
+
+            info.scrollTop = info.scrollHeight;
+
             endGame({ isWin: true, winner: win.player });
         } else {
             // Nếu chưa thắng, chỉ render nước đi mới
