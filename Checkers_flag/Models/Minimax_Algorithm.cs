@@ -21,9 +21,9 @@ namespace Checkers_flag.Models
         // Điểm tấn công/phòng thủ cơ bản cho mỗi chuỗi liên tiếp dài
         public int Evaluate(int i, int j, int player)
         {
-            
-            if (ktr(i, j, 1)) return 1000;//Nếu player 1 thắng trả về giá trị 1000
-            if (ktr(i, j, 2)) return -1000;//nếu player 2 thắng trả về giá trị -1000
+
+            if (ktr(i, j, 1)) return 10000;//Nếu player 1 thắng trả về giá trị 1000
+            if (ktr(i, j, 2)) return -10000;//nếu player 2 thắng trả về giá trị -1000
             return diemtungnuoc(i, j, player); // trả về điểm herustic
         }
 
@@ -36,7 +36,7 @@ namespace Checkers_flag.Models
             // Các hướng: ngang, dọc(1,0), chéo chính(1,1), chéo phụ(1,-1)
             int[][] directions = new int[][]
             {
-                
+
                 new int[]{0,1}, new int[]{1,0}, new int[]{1,1}, new int[]{1,-1}
                         //ngang          //dọc          //chéo chính    //chéo phụ
             };
@@ -114,10 +114,10 @@ namespace Checkers_flag.Models
 
             // DOUBLE-THREAT
             int attackThreats = CountThreats(row, col, player);
-            if (attackThreats >= 2) score += 10000;//nếu có hơn hơn 2 nước nguy hiểm thì cộng nhiều điểm cho Al(ưu tiên tấn công để thắng chắc)
+            if (attackThreats >= 2) score += 1000;//nếu có hơn hơn 2 nước nguy hiểm thì cộng nhiều điểm cho Al(ưu tiên tấn công để thắng chắc)
 
             int defenseThreats = CountThreats(row, col, opponent);// nếu đối thủ có hơn 2 nước nguy hiểm thì ưu tiên cho al phòng thủ 
-            if (defenseThreats >= 2) score += 5000;
+            if (defenseThreats >= 2) score += 500;
 
             return score;
         }
@@ -139,14 +139,57 @@ namespace Checkers_flag.Models
             if (IsValid(r, c) && a[r, c] == 0) openEnds++;//// kiểm xem ô ở vị r c có trống hay không và kiểm tra có nằm ngoài bàn cờ hay không sau đó cập nhật lại openEnds
 
             int score = 0;//tạo biến lưu điểm
+                          //    switch (count)
+                          //    {   //cập nhật lại giá trị điểm
+                          //        case 2: score = openEnds == 2 ? 20 : 10; break;//2 đầu mở thì lưu 20 điểm một đầu thì 10 điểm
+                          //        case 3: score = openEnds == 2 ? 100 : 50; break;//3 quân thì lưu 100 với hai đầu mở ,một đầu thì 50
+                          //        case 4: score = openEnds == 2 ? 500 : 200; break;//4 quân thì lưu 500 điểm với hai đầu mở, một đầu thì 200
+                          //        case 5: score = 10000; break; //5 quân thắng ngay để al ưu tiên nước đi đó
+                          //        default: score = count > 5 ? 10000 : 0; break;//dài hơn 5 quân thì vẫn coi như vẫn thắng ngược lại thì không đáng kể
+                          //    }
+                          //    return score;
+                          //}
             switch (count)
-            {   //cập nhật lại giá trị điểm
-                case 2: score = openEnds == 2 ? 20 : 10; break;//2 đầu mở thì lưu 20 điểm một đầu thì 10 điểm
-                case 3: score = openEnds == 2 ? 100 : 50; break;//3 quân thì lưu 100 với hai đầu mở ,một đầu thì 50
-                case 4: score = openEnds == 2 ? 500 : 200; break;//4 quân thì lưu 500 điểm với hai đầu mở, một đầu thì 200
-                case 5: score = 10000; break; //5 quân thắng ngay để al ưu tiên nước đi đó
-                default: score = count > 5 ? 10000 : 0; break;//dài hơn 5 quân thì vẫn coi như vẫn thắng ngược lại thì không đáng kể
+            {
+                case 2:
+                    // Hai quân liền nhau
+                    if (openEnds == 2) score = 20;       // hai đầu mở -> có tiềm năng
+                    else if (openEnds == 1) score = 10;  // một đầu mở -> ít tiềm năng
+                    else score = 0;                      // chặn hai đầu -> bỏ
+                    break;
+
+                case 3:
+                    if (IsBlockedBothEnds_NoCountLine(r, c, player, 3))
+                        score = 0; // chặn cả hai đầu -> vô dụng
+                    else if (openEnds == 2)
+                        score = 100; // 3 mở 2 đầu -> nguy hiểm
+                    else if (openEnds == 1)
+                        score = 20;  // 3 mở 1 đầu -> có thể phát triển
+                    else
+                        score = 0;
+                    break;
+
+                case 4:
+                    if (IsBlockedBothEnds_NoCountLine(r, c, player, 4))
+                        score = 0; // chặn hai đầu -> không thắng được
+                    else if (openEnds == 2)
+                        score = 500; // 4 mở 2 đầu -> nước gần thắng, ưu tiên cực cao
+                    else if (openEnds == 1)
+                        score = 100; // 4 bị chặn 1 đầu -> vẫn có thể thắng
+                    else
+                        score = 0;
+                    break;
+
+                case 5:
+                    score = 1000; // thắng tuyệt đối
+                    break;
+
+                default:
+                    // Chỉ cho điểm nếu có khả năng tạo đường thắng dài hơn
+                    score = (count > 5) ? 1000 : 0;
+                    break;
             }
+
             return score;
         }
 
@@ -170,7 +213,7 @@ namespace Checkers_flag.Models
         {
             // Tạm thời đặt quân vào ô
             a[row, col] = player;
-           
+
             bool result = CountLine(row, col, player, length) > 0;//kiểm tra vị trí đặt quân có tạo được lenght > 0 hay không
 
             // Quay lại trạng thái ban đầu
@@ -180,36 +223,81 @@ namespace Checkers_flag.Models
         }
 
         // Kiểm tra tất cả ô trống, nếu đặt quân người chơi sẽ tạo thành 3 liên tiếp thì thêm vào danh sách chặn
-        public List<(int, int)> FindAllBlockingMoves(int player)
+        //public List<(int, int)> FindAllBlockingMoves(int player)
+        //{
+        //    // Danh sách các ô cần chặn để ngăn đối thủ thắng
+        //    var blocks = new List<(int, int)>();
+        //    int N = a.GetLength(0);
+
+        //    // Duyệt qua tất cả các ô trên bàn cờ để tìm các nước đi chặn cần thiết
+        //    for (int i = 0; i < N; i++) //duyệt dòng i 
+        //    {
+        //        for (int j = 0; j < N; j++)//duyệt cột 
+        //        {
+        //            // Chỉ xét các ô trống (0)
+        //            if (a[i, j] == 0)
+        //            {
+        //                a[i, j] = player;
+        //                // Nếu đặt quân tại (i, j) sẽ tạo thành chuỗi 3 liên tiếp, thêm vào danh sách chặn
+        //                if (CountLine(i, j, player, 3) > 0)
+
+        //                    blocks.Add((i, j));//nếu kết quả lớn hơn 0 có chuỗi 3 liên tiếp thêm vào block 
+
+        //                // Quay lại trạng thái ban đầu tránh ảnh hưởng bàn cờ
+        //                a[i, j] = 0;
+        //            }
+        //        }
+        //    }
+
+        //    // Trả về danh sách các ô cần chặn
+        //    return blocks;
+        //}
+        private bool IsBlockedBothEnds_NoCountLine(int x, int y, int player, int chuoi)
         {
-            // Danh sách các ô cần chặn để ngăn đối thủ thắng
-            var blocks = new List<(int, int)>();
-            int N = a.GetLength(0);
+            // 4 hướng kiểm tra: dọc, ngang, chéo chính (\), chéo phụ (/)
+            int[,] directions = { { 1, 0 }, { 0, 1 }, { 1, 1 }, { 1, -1 } };
+            int size = a.GetLength(0);
 
-            // Duyệt qua tất cả các ô trên bàn cờ để tìm các nước đi chặn cần thiết
-            for (int i = 0; i < N; i++) //duyệt dòng i 
+            for (int k = 0; k < 4; k++)
             {
-                for (int j = 0; j < N; j++)//duyệt cột 
-                {
-                    // Chỉ xét các ô trống (0)
-                    if (a[i, j] == 0)
-                    {
-                        a[i, j] = player;
-                        // Nếu đặt quân tại (i, j) sẽ tạo thành chuỗi 3 liên tiếp, thêm vào danh sách chặn
-                        if (CountLine(i, j, player, 3) > 0)
-                            
-                            blocks.Add((i, j));//nếu kết quả lớn hơn 0 có chuỗi 3 liên tiếp thêm vào block 
+                int dx = directions[k, 0];
+                int dy = directions[k, 1];
 
-                        // Quay lại trạng thái ban đầu tránh ảnh hưởng bàn cờ
-                        a[i, j] = 0;
-                    }
+                int count = 1;        // Đếm số quân liên tiếp
+                int blockedEnds = 0;  // Đếm số đầu bị chặn
+
+                // --- Đếm xuôi ---
+                int x1 = x + dx, y1 = y + dy;
+                while (x1 >= 0 && y1 >= 0 && x1 < size && y1 < size && a[x1, y1] == player)
+                {
+                    count++;
+                    x1 += dx;
+                    y1 += dy;
                 }
+                // Kiểm tra đầu thứ nhất có bị chặn không
+                if (x1 < 0 || y1 < 0 || x1 >= size || y1 >= size || (a[x1, y1] != 0 && a[x1, y1] != player))
+                    blockedEnds++;
+
+                // --- Đếm ngược ---
+                int x2 = x - dx, y2 = y - dy;
+                while (x2 >= 0 && y2 >= 0 && x2 < size && y2 < size && a[x2, y2] == player)
+                {
+                    count++;
+                    x2 -= dx;
+                    y2 -= dy;
+                }
+                // Kiểm tra đầu còn lại
+                if (x2 < 0 || y2 < 0 || x2 >= size || y2 >= size || (a[x2, y2] != 0 && a[x2, y2] != player))
+                    blockedEnds++;
+
+                // Nếu có chuỗi quân mà bị chặn ở 2 trong hai đầu → true
+                if (count == chuoi && blockedEnds == 2)
+                    return true;
             }
 
-            // Trả về danh sách các ô cần chặn
-            return blocks;
+            // Không có chuỗi 3 nào bị chặn hai đầu
+            return false;
         }
-
 
         // ==================== 4. Nước đi khả thi ====================
 
@@ -225,8 +313,8 @@ namespace Checkers_flag.Models
             for (int i = 0; i < N; i++)//duyệt theo hàng
                 for (int j = 0; j < N; j++)//duyệt theo cột
                     // Chỉ xét các ô trống (0) có quân cờ lân cận trong khoảng cách 2 
-                    if (a[i, j] == 0 && HasNeighbor(i, j, 2))//kiểm tra ô trống dòng i,cột j và ô này phải có ít nhất một quân cờ (của bạn hoặc đối thủ) nằm trong phạm vi 2 ô xung quanh
-                        
+                    if (a[i, j] == 0 && HasNeighbor(i, j, 5))//kiểm tra ô trống dòng i,cột j và ô này phải có ít nhất một quân cờ (của bạn hoặc đối thủ) nằm trong phạm vi 2 ô xung quanh
+
                         moves.Add((i, j));//thêm a[i][j] vào move
 
             // Trả về danh sách các nước đi khả thi
@@ -269,38 +357,101 @@ namespace Checkers_flag.Models
             // Duyệt qua từng nước đi khả thi
 
 
+            #region temp
+            //foreach (var (i, j) in moves)
+            //{
+            //    // Tạm thời đặt quân của AI hoặc người chơi vào ô (i, j)
+            //    a[i, j] = isAI ? 2 : 1;
+
+            //    // Đánh giá điểm của ô vừa đặt (i, j)
+            //    int eval = EvaluateCell(i, j, isAI ? 2 : 1);
+
+            //    // Nếu điểm đánh giá không quá cao (chưa thắng/thua ngay) và còn độ sâu, tiếp tục đệ quy
+            //    if (Math.Abs(eval) < 1000 && depth > 1)
+            //        eval = minimax(depth - 1, !isAI, alpha, beta, out _, out _);
+
+
+            //    // Quay lại trạng thái ban đầu
+            //    a[i, j] = 0;
+
+
+            //    // Cập nhật giá trị đánh giá tối đa/tối thiểu và vị trí nước đi tốt nhất dựa trên vai trò AI hay người chơi
+            //    if (isAI)
+            //    {
+            //        if (eval > maxEval) { maxEval = eval; bestI = i; bestJ = j; }
+            //        alpha = Math.Max(alpha, maxEval);
+            //    }
+            //    // Nếu là người chơi, cập nhật giá trị đánh giá tối thiểu và vị trí nước đi tốt nhất
+            //    else
+            //    {
+
+            //        if (eval < minEval) { minEval = eval; bestI = i; bestJ = j; }
+            //        beta = Math.Min(beta, minEval);
+            //    }
+            //    // Cắt tỉa nếu không còn cần thiết phải duyệt tiếp (nhánh không tốt hơn)
+            //    if (beta <= alpha) break;
+            //}
+            #endregion
+           
+            //Duyệt qua từng nước đi khả thi
             foreach (var (i, j) in moves)
             {
                 // Tạm thời đặt quân của AI hoặc người chơi vào ô (i, j)
                 a[i, j] = isAI ? 2 : 1;
 
-                // Đánh giá điểm của ô vừa đặt (i, j)
+                //ƯU TIÊN: nếu nước này giúp AI thắng ngay thì chọn luôn
+                if (isAI && ktr(i, j, 2))
+                {
+                    bestI = i;
+                    bestJ = j;
+                    a[i, j] = 0; // khôi phục bàn cờ
+                    return 10000; // thắng tuyệt đối
+                }
+
+                //Nếu người chơi thắng ngay, chặn khẩn cấp
+                if (!isAI && ktr(i, j, 1))
+                {
+                    bestI = i;
+                    bestJ = j;
+                    a[i, j] = 0;
+                    return -10000;
+                }
+
+                // Đánh giá điểm heuristic
                 int eval = EvaluateCell(i, j, isAI ? 2 : 1);
 
-                // Nếu điểm đánh giá không quá cao (chưa thắng/thua ngay) và còn độ sâu, tiếp tục đệ quy
-                if (Math.Abs(eval) < 1000 && depth > 1)
-                    eval = minimax(depth - 1, !isAI, alpha, beta, out _, out _);
+                // Nếu điểm bằng nhau, ưu tiên AI
+                if (isAI && eval == minEval)
+                    eval += 10;
 
+                // Nếu chưa thắng/thua ngay và còn độ sâu, tiếp tục đệ quy
+                if (Math.Abs(eval) < 10000 && depth >= 1)
+                    eval = minimax(depth - 1, !isAI, alpha, beta, out _, out _);
 
                 // Quay lại trạng thái ban đầu
                 a[i, j] = 0;
 
-
-                // Cập nhật giá trị đánh giá tối đa/tối thiểu và vị trí nước đi tốt nhất dựa trên vai trò AI hay người chơi
+                // Cập nhật giá trị tốt nhất
                 if (isAI)
                 {
-                    if (eval > maxEval) { maxEval = eval; bestI = i; bestJ = j; }
+                    if (eval > maxEval)
+                    {
+                        maxEval = eval;
+                        bestI = i; bestJ = j;
+                    }
                     alpha = Math.Max(alpha, maxEval);
                 }
-                // Nếu là người chơi, cập nhật giá trị đánh giá tối thiểu và vị trí nước đi tốt nhất
                 else
                 {
-                    
-                    if (eval < minEval) { minEval = eval; bestI = i; bestJ = j; }
+                    if (eval < minEval)
+                    {
+                        minEval = eval;
+                        bestI = i; bestJ = j;
+                    }
                     beta = Math.Min(beta, minEval);
                 }
-                // Cắt tỉa nếu không còn cần thiết phải duyệt tiếp (nhánh không tốt hơn)
-                if (beta <= alpha) break;
+
+                if (beta <= alpha) break; // cắt tỉa
             }
             // Trả về giá trị đánh giá tối đa nếu là AI, ngược lại trả về tối thiểu
             return isAI ? maxEval : minEval;
@@ -352,13 +503,13 @@ namespace Checkers_flag.Models
                 // Cập nhật giá trị đánh giá tối đa/tối thiểu và vị trí nước đi tốt nhất dựa trên vai trò AI hay người chơi
                 if (isAI)
                 {
-                    
+
                     if (eval > maxEval) { maxEval = eval; bestI = i; bestJ = j; }
                 }
                 // Nếu là người chơi, cập nhật giá trị đánh giá tối thiểu và vị trí nước đi tốt nhất
                 else
                 {
-                    
+
                     if (eval < minEval) { minEval = eval; bestI = i; bestJ = j; }
                 }
             }
