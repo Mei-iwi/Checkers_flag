@@ -159,7 +159,7 @@ namespace Checkers_flag.Controllers
                 foreach (var move in topMoves)
                 {
                     board[move.i, move.j] = 2;
-                    int eval = minimaxAI.minimax(3, false, int.MinValue, int.MaxValue, out _, out _);
+                    int eval = minimaxAI.minimax(2, false, int.MinValue, int.MaxValue, out _, out _);
                     board[move.i, move.j] = 0;
                     if (eval > bestVal)
                     {
