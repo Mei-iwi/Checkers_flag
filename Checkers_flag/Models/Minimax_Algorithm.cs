@@ -22,8 +22,8 @@ namespace Checkers_flag.Models
         public int Evaluate(int i, int j, int player)
         {
 
-            if (ktr(i, j, 1)) return 10000;//Nếu player 1 thắng trả về giá trị 1000
-            if (ktr(i, j, 2)) return -10000;//nếu player 2 thắng trả về giá trị -1000
+            if (ktr(i, j, 1)) return 1000;//Nếu player 1 thắng trả về giá trị 1000
+            if (ktr(i, j, 2)) return -1000;//nếu player 2 thắng trả về giá trị -1000
             return diemtungnuoc(i, j, player); // trả về điểm herustic
         }
 
@@ -301,7 +301,7 @@ namespace Checkers_flag.Models
 
         // ==================== 4. Nước đi khả thi ====================
 
-        // Lấy danh sách các ô trống có quân cờ lân cận trong khoảng cách 2 để giới hạn phạm vi tìm kiếm nước đi
+        // Lấy danh sách các ô trống có quân cờ lân cận trong khoảng cách 5 để giới hạn phạm vi tìm kiếm nước đi
         public List<(int, int)> GetCandidateMoves()
         {
 
@@ -321,7 +321,7 @@ namespace Checkers_flag.Models
             return moves;
         }
 
-        // Kiểm tra nếu ô (row, col) có quân cờ lân cận trong khoảng cách 'distance' không
+        // Kiểm tra nếu ô (row, col) có quân cờ lân cận trong khoảng cách không
         bool HasNeighbor(int row, int col, int distance)
         {
             int N = a.GetLength(0);//lấy kích thước bàn cờ N
@@ -405,7 +405,7 @@ namespace Checkers_flag.Models
                     bestI = i;
                     bestJ = j;
                     a[i, j] = 0; // khôi phục bàn cờ
-                    return 10000; // thắng tuyệt đối
+                    return 1000; // thắng tuyệt đối
                 }
 
                 //Nếu người chơi thắng ngay, chặn khẩn cấp
@@ -414,7 +414,7 @@ namespace Checkers_flag.Models
                     bestI = i;
                     bestJ = j;
                     a[i, j] = 0;
-                    return -10000;
+                    return -1000;
                 }
 
                 // Đánh giá điểm heuristic
@@ -425,7 +425,7 @@ namespace Checkers_flag.Models
                     eval += 10;
 
                 // Nếu chưa thắng/thua ngay và còn độ sâu, tiếp tục đệ quy
-                if (Math.Abs(eval) < 10000 && depth >= 1)
+                if (Math.Abs(eval) < 1000 && depth >= 1)
                     eval = minimax(depth - 1, !isAI, alpha, beta, out _, out _);
 
                 // Quay lại trạng thái ban đầu
