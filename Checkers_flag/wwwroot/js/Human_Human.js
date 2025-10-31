@@ -12,15 +12,15 @@ function createBoardPvP() {
             cell.className = "cell";//tạo cột
             cell.dataset.row = i;//gán giá trị dòng là i
             cell.dataset.col = j;//gán giá trị cột là j
-            cell.style.width = "40px";//kích thước ô rộng
-            cell.style.height = "40px";//kích thước cao
+            //cell.style.width = "40px";//kích thước ô rộng
+            //cell.style.height = "40px";//kích thước cao
             cell.style.border = "1px solid #333";//border có kích thước 1px, màu solid #333
             cell.style.display = "flex";//căn giữa
             cell.style.alignItems = "center";//căn giữa
             cell.style.justifyContent = "center";//căn giữa
             cell.style.cursor = "pointer";//trỏ chuột thành bàn tay
             cell.style.userSelect = "none";//không cho bôi đen chữ X hay O trong O
-            cell.style.fontSize = "20px";//kichs thước font
+            //cell.style.fontSize = "20px";//kichs thước font
             cell.style.background = "#fff";//màu background
 
             cell.addEventListener("click", () => handleClickPvP(cell, i, j));//gắn sự kiện click cho từng ô
@@ -111,13 +111,13 @@ function renderCellPvP(el, val) {
         el.textContent = "❌";//quân cờ
         el.style.background = "#ffe6e6"; // đỏ nhạt
         el.style.color = "red";//màu của quân cờ
-        el.style.fontSize = "30px";//kích thước quân cờ
+        //el.style.fontSize = "30px";//kích thước quân cờ
         el.style.fontWeight = "bold";//in đậm
     } else if (val === 2) {//trả về giá trị 2
         el.textContent = "O";//quân cờ
         el.style.background = "#cce0ff"; // 💙 xanh nhạt hơn
         el.style.color = "#0040ff";      // xanh đậm
-        el.style.fontSize = "30px";//kích thước quân cờ
+       // el.style.fontSize = "30px";//kích thước quân cờ
         el.style.fontWeight = "bold";
     } else {
         el.textContent = "";//nếu ko có giá trị thì ô đó trống

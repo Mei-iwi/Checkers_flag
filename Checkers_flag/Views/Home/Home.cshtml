@@ -26,11 +26,14 @@
         height:350px;
         width:800px;
     }
+
+  
+ 
 </style>
 <div class="text-center mt-5 background-board w-100">
     <h2 class="mb-lg-5 text-center w-100" id="text">CHỌN CHẾ ĐỘ CỜ CARO</h2>
    
-    <div class="button d-flex justify-content-center ">
+    <div id="buttonHome" class="button d-flex justify-content-center ">
         @Html.ActionLink("CHƠI VỚI NGƯỜI", "withHuman", "Home", null, new { @class = "btn btn-primary btn-lg mr-2" })
         @Html.ActionLink("CHƠI VỚI MÁY", "withAI", "Home", null, new { @class = "btn btn-primary btn-lg  ml-2" })
     </div>

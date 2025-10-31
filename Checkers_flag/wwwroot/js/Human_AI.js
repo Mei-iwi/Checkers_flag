@@ -27,15 +27,15 @@ function createBoard() {
             // ================== STYLE Ô ==================
             //Đặt kích thước, đường viền ,màu nền, căn giữa cho tuwfng ô cờ
             Object.assign(cell.style, {
-                width: "40px",
-                height: "40px",
+                //width: "40px",
+                //height: "40px",
                 border: "1px solid #333",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
                 cursor: "pointer",
                 userSelect: "none",
-                fontSize: "20px",
+                //fontSize: "20px",
                 background: "#fff"
             });
 
@@ -125,7 +125,7 @@ function renderCell(el, val) {
         el.textContent = "❌";
         el.style.background = "#ffe6e6";
         el.style.color = "red";
-        el.style.fontSize = "30px";
+        //l.style.fontSize = "30px";
         el.style.fontWeight = "bold";
     } else if (val === 2) {
         // ================== AI ==================
@@ -133,10 +133,29 @@ function renderCell(el, val) {
         el.textContent = "O";
         el.style.background = "#e6f0ff";
         el.style.color = "blue";
-        el.style.fontSize = "30px";
+        // el.style.fontSize = "30px";
         el.style.fontWeight = "bold";
     }
 }
+
+function renderMove(row, col, player) {
+    const index = row * N + col;
+    const cellEl = boardDiv.querySelectorAll(".cell")[index];
+    if (!cellEl) return;
+
+    if (player === 1) {
+        cellEl.textContent = "❌";
+        cellEl.style.background = "#ffe6e6";
+        cellEl.style.color = "red";
+    } else if (player === 2) {
+        cellEl.textContent = "O";
+        cellEl.style.background = "#e6f0ff";
+        cellEl.style.color = "blue";
+    }
+
+    cellEl.style.fontWeight = "bold";
+}
+
 
 // ================== CLICK NGƯỜI ==================
 // Xử lý khi người chơi click vào 1 ô
@@ -272,8 +291,11 @@ function startTimerPvP() {
         }
 
         // hiển thị thời gian của hai người chơi
-        $("#timePlayerA").text("❌: " + formatTime(timeLeftPlayer1));
-        $("#timePlayerB").html("<span style='color:blue;font-weight:bold;'>O</span>: " + formatTime(timeLeftPlayer2));
+        $("#timePlayerA").html(
+            `<span style="color:red; font-weight:bold;">❌</span> <span>${formatTime(timeLeftPlayer1)}</span>`
+        );        $("#timePlayerB").html(
+            `<span style="color:blue; font-weight:bold;">O</span> <span>${formatTime(timeLeftPlayer2)}</span>`
+        );
 
         // kiểm tra hết giờ
         if (timeLeftPlayer1 <= 0 || timeLeftPlayer2 <= 0) {

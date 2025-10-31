@@ -2,6 +2,9 @@
 using Microsoft.AspNetCore.Mvc;
 using System.Linq;
 using System.Collections.Generic;
+using Checkers_flag.Helpers;
+using Microsoft.AspNetCore.Http;
+
 
 namespace Checkers_flag.Controllers
 {
@@ -10,74 +13,90 @@ namespace Checkers_flag.Controllers
     public class GameWithAIController : Controller
     {
         //Khởi tạo ma trận 10 * 10 cho trò chơi
-        private static int[,] board = new int[15, 15];
+        //private static int[,] board = new int[15, 15];
 
         //Tạo đối tượng minimaxAI
         private Minimax_Algorithm minimaxAI = new Minimax_Algorithm();
 
         // Khởi tạo lượt chơi mặt định (Người đi trước)
-        private static int currentPlayer = 1; // 1: người, 2: AI
+        //private static int currentPlayer = 1; // 1: người, 2: AI
+
+        private int CurrentPlayer
+        {
+            get => HttpContext.Session.GetInt32("CurrentPlayer") ?? 1;
+            set => HttpContext.Session.SetInt32("CurrentPlayer", value);
+        }
 
 
+        private int[,] Board
+        {
+            get
+            {
+                if (HttpContext.Session.GetObject<int[,]>("Board") == null)
+                    HttpContext.Session.SetObject("Board", new int[15, 15]);
+                return HttpContext.Session.GetObject<int[,]>("Board");
+            }
+            set
+            {
+                HttpContext.Session.SetObject("Board", value);
+            }
+        }
+
+      
         //Thiết lập lại trò chơi
         [HttpGet]
         public IActionResult ResetGame(int firstPlayer = 1)
         {
-            int N = 15; // kích thước bàn cờ
-            board = new int[N, N]; // làm mới bàn cờ
-            currentPlayer = firstPlayer; // thiết lập người chơi đầu tiên la người chơi 1(Người)
-            object lastMove = null; //lưu lại nước đi cuối cùng
+            int N = 15;
+            var board = new int[N, N];
+            Board = board;  // ✅ lưu vào Session
+            CurrentPlayer = firstPlayer;
 
-            // Nếu AI đi trước → random một ô ngẫu nhiên
+            object lastMove = null;
+
+            // Nếu AI đi trước
             if (firstPlayer == 2)
             {
                 var rnd = new Random();
-                int aiRow, aiCol;
-
-                // Chỉ chọn trong ô 3x3 giữa bàn cờ 15x15
-                int start = N / 2 - 1; // = 15/2 - 1 = 6
-                int end = N / 2 + 1;   // = 7 + 1 = 8
-
-                do
-                {
-                    aiRow = rnd.Next(start, end + 1); // [6, 8]
-                    aiCol = rnd.Next(start, end + 1); // [6, 8]
-                } while (board[aiRow, aiCol] != 0); // Tìm ô trống
-
-                board[aiRow, aiCol] = 2; // AI đánh quân cờ
+                int aiRow = N / 2, aiCol = N / 2;
+                board[aiRow, aiCol] = 2;
+                Board = board; // cập nhật lại session
                 lastMove = new { row = aiRow, col = aiCol };
-
-                currentPlayer = 1;
+                CurrentPlayer = 1;
             }
 
-
-
-            // Trả kết quả khởi tạo về client (AJAX)
             return Json(new
             {
-                success = true,               // API gọi thành công
-                board = ToJagged(board),      // chuyển ma trận [,] → [][] để JSON hóa
-                currentPlayer,                // lượt đi tiếp theo
-                lastMove                      // nước đi cuối cùng (nếu có)
+                success = true,
+                board = ToJagged(board),
+                currentPlayer = CurrentPlayer,
+                lastMove
             });
         }
+
 
         //Thực hiện nước đi của AI
         // [FromForm] Nhận dữ liệu từ form HTML hoặc từ form-data trong body của request
         [HttpPost]
         public IActionResult Move([FromForm] int row, [FromForm] int col)
         {
-            int N = board.GetLength(0);// lấy kích thước bàn cờ
+            //int N = board.GetLength(0);// lấy kích thước bàn cờ
+
+            var board = Board;
+            int N = board.GetLength(0);
+
 
             // ================== 1. KIỂM TRA NƯỚC ĐI CỦA NGƯỜI ==================
             //Nếu đánh ngoài bàn hoặc ô đã có người đánh -> báo lỗi
             if (row < 0 || row >= N || col < 0 || col >= N || board[row, col] != 0)
                 return Json(new { success = false, message = "Ô không hợp lệ!" });
             //Nếu không phải lượt người chơi → báo lỗi
-            if (currentPlayer != 1)
+            if (CurrentPlayer != 1)
                 return Json(new { success = false, message = "Không phải lượt người chơi!" });
             // Ghi lại nước đi của người chơi
-            board[row, col] = 1; // Cập nhật bàn cờ
+            board[row, col] = 1;
+            Board = board;
+
             var check = new Checkgame(board);
 
             // Kiểm tra người chơi thắng sau nước đi
@@ -192,6 +211,7 @@ namespace Checkers_flag.Controllers
                 board[aiRow, aiCol] = 2;
                 lastMoveAI = new { row = aiRow, col = aiCol };
             }
+            Board = board;
 
             // ================== 4. KIỂM TRA AI THẮNG/HÒA ==================
             if (lastMoveAI != null)
@@ -225,12 +245,12 @@ namespace Checkers_flag.Controllers
             }
 
             // ================== 5. TRẢ QUYỀN CHO NGƯỜI ==================
-            currentPlayer = 1;
+            CurrentPlayer = 1;
             return Json(new
             {
                 success = true,
                 board = ToJagged(board),
-                currentPlayer,
+                currentPlayer = CurrentPlayer, 
                 lastMove = lastMoveAI,
                 isWin = false,
                 isDraw = false,
