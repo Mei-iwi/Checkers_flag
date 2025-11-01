@@ -81,7 +81,7 @@ function renderBoard(board, lastMove = null, winningLine = null) {
 
             // Tô vàng nước đi cuối
             if (lastMove && lastMove.row === i && lastMove.col === j) {
-                cellEl.style.background = "#ffff99";
+                cellEl.style.background = "#ffcccc";
             }
 
             // Nếu ô nằm trong chuỗi thắng → tô đỏ
@@ -644,44 +644,50 @@ function hidePossibleMoves() {
 
 let lastHighlightedMoves = []; // lưu các ô khả thi đã highlight
 function highlightPossibleMovesAI() {
-    // Xóa highlight cũ
+    // Xóa highlight cũ các nước đi khả thi
     lastHighlightedMoves.forEach(move => {
         const index = move.row * N + move.col;
         const cellEl = boardDiv.querySelectorAll(".cell")[index];
         if (cellEl) {
-            // không ghi đè màu nước đi cuối
-            if (!lastMoveGlobal || lastMoveGlobal.row !== move.row || lastMoveGlobal.col !== move.col) {
-                cellEl.style.background = "#fff";  // reset nền trắng
-                cellEl.style.border = "1px solid #333"; // reset viền
-            }
+            cellEl.style.background = "#fff";  // reset nền trắng
+            cellEl.style.border = "1px solid #333"; // reset viền
         }
     });
+    lastHighlightedMoves = [];
 
-    // Highlight các ô khả thi AI mới
+    // Xóa nền đỏ nhạt của nước đi chính thức cũ
+    if (lastMoveGlobal) {
+        const oldIndex = lastMoveGlobal.row * N + lastMoveGlobal.col;
+        const oldCell = boardDiv.querySelectorAll(".cell")[oldIndex];
+        if (oldCell) {
+            oldCell.style.background = "#fff";  // reset nền trắng
+            oldCell.style.border = "1px solid #333"; // reset viền
+        }
+    }
+
+    // Highlight các ô khả thi AI (dự đoán)
     if (possibleMoves && possibleMoves.length > 0) {
         possibleMoves.forEach(move => {
             const index = move.row * N + move.col;
             const cellEl = boardDiv.querySelectorAll(".cell")[index];
-            if (cellEl && cells[move.row][move.col] === 0) { // chỉ ô trống
-                cellEl.style.background = "#99ccff";      // nền xanh nhạt nổi bật
+            if (cellEl && cells[move.row][move.col] === 0) {
+                cellEl.style.background = "#99ccff";      // nền xanh nhạt
                 cellEl.style.border = "2px solid #3399ff"; // viền xanh đậm
-                cellEl.style.transition = "background 0.3s ease"; // hiệu ứng mượt
+                cellEl.style.transition = "background 0.3s ease";
             }
         });
         lastHighlightedMoves = [...possibleMoves];
         movesHighlighted = true;
     }
-    // Highlight các ô khả thi AI mới
-    if (possibleMoves && possibleMoves.length > 0) {
-        possibleMoves.forEach(move => {
-            const index = move.row * N + move.col;
-            const cellEl = boardDiv.querySelectorAll(".cell")[index];
-            if (cellEl && cells[move.row][move.col] === 0) { // chỉ ô trống
-                cellEl.style.background = "#ffff99"; // highlight
-            }
-        });
-        lastHighlightedMoves = [...possibleMoves];
-        movesHighlighted = true;
+
+    // Highlight nước đi chính thức AI mới → đỏ nhạt
+    if (lastMoveGlobal) {
+        const index = lastMoveGlobal.row * N + lastMoveGlobal.col;
+        const cellEl = boardDiv.querySelectorAll(".cell")[index];
+        if (cellEl) {
+            cellEl.style.background = "#ffcccc";  // nền đỏ nhạt
+            cellEl.style.border = "2px solid #ff6666"; // viền đỏ đậm
+        }
     }
 }
 
