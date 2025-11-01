@@ -12,7 +12,7 @@ let timerId = null;
 // Lấy div hiển thị bàn cờ trong HTML (id="board")
 const boardDiv = document.getElementById("board");
 
-let lastMoveGlobal = null; 
+let lastMoveGlobal = null;
 
 let possibleMoves = []; // lưu 5 nước đi khả thi
 let movesHighlighted = false; // trạng thái highlight
@@ -265,7 +265,7 @@ function updateBoardFromServer(res) {
             const showStepDiv = document.getElementById("showStep");
 
             // Xóa danh sách cũ nếu có
-           // const oldSpan = document.getElementById("possibleMovesDisplay");
+            // const oldSpan = document.getElementById("possibleMovesDisplay");
             //if (oldSpan) oldSpan.remove();
 
             const spanMoves = document.createElement("span");
@@ -320,7 +320,7 @@ function startTimerPvP() {
         // hiển thị thời gian của hai người chơi
         $("#timePlayerA").html(
             `<span style="color:red; font-weight:bold;">❌</span> <span>${formatTime(timeLeftPlayer1)}</span>`
-        );        $("#timePlayerB").html(
+        ); $("#timePlayerB").html(
             `<span style="color:blue; font-weight:bold;">O</span> <span>${formatTime(timeLeftPlayer2)}</span>`
         );
 
@@ -629,7 +629,10 @@ function hidePossibleMoves() {
         const cellEl = boardDiv.querySelectorAll(".cell")[index];
         if (cellEl) {
             if (!lastMoveGlobal || lastMoveGlobal.row !== move.row || lastMoveGlobal.col !== move.col) {
-                cellEl.style.background = "#fff"; // reset màu
+                cellEl.style.background = "#fff";
+                cellEl.style.border = "1px solid #333";
+                cellEl.style.transition = "none";
+
             }
         }
     });
@@ -648,11 +651,26 @@ function highlightPossibleMovesAI() {
         if (cellEl) {
             // không ghi đè màu nước đi cuối
             if (!lastMoveGlobal || lastMoveGlobal.row !== move.row || lastMoveGlobal.col !== move.col) {
-                cellEl.style.background = "#fff";
+                cellEl.style.background = "#fff";  // reset nền trắng
+                cellEl.style.border = "1px solid #333"; // reset viền
             }
         }
     });
 
+    // Highlight các ô khả thi AI mới
+    if (possibleMoves && possibleMoves.length > 0) {
+        possibleMoves.forEach(move => {
+            const index = move.row * N + move.col;
+            const cellEl = boardDiv.querySelectorAll(".cell")[index];
+            if (cellEl && cells[move.row][move.col] === 0) { // chỉ ô trống
+                cellEl.style.background = "#99ccff";      // nền xanh nhạt nổi bật
+                cellEl.style.border = "2px solid #3399ff"; // viền xanh đậm
+                cellEl.style.transition = "background 0.3s ease"; // hiệu ứng mượt
+            }
+        });
+        lastHighlightedMoves = [...possibleMoves];
+        movesHighlighted = true;
+    }
     // Highlight các ô khả thi AI mới
     if (possibleMoves && possibleMoves.length > 0) {
         possibleMoves.forEach(move => {
@@ -666,7 +684,6 @@ function highlightPossibleMovesAI() {
         movesHighlighted = true;
     }
 }
-
 
 
 let highlightInterval = null;
