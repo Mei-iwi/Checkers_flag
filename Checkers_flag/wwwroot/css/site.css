@@ -374,3 +374,12 @@
         order: 4;
     }
 }
+
+
+.possible-move {
+    background-color: #ffff66 !important;
+}
+
+.last-move {
+    background-color: #ffff99 !important;
+}

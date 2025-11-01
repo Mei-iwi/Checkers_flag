@@ -42,7 +42,7 @@ namespace Checkers_flag.Controllers
             }
         }
 
-      
+
         //Thiết lập lại trò chơi
         [HttpGet]
         public IActionResult ResetGame(int firstPlayer = 1)
@@ -51,6 +51,7 @@ namespace Checkers_flag.Controllers
             var board = new int[N, N];
             Board = board;  // ✅ lưu vào Session
             CurrentPlayer = firstPlayer;
+
 
             object lastMove = null;
 
@@ -84,6 +85,7 @@ namespace Checkers_flag.Controllers
 
             var board = Board;
             int N = board.GetLength(0);
+
 
 
             // ================== 1. KIỂM TRA NƯỚC ĐI CỦA NGƯỜI ==================
@@ -213,6 +215,56 @@ namespace Checkers_flag.Controllers
             }
             Board = board;
 
+
+            // ================== DANH SÁCH NƯỚC ĐI KHẢ THI CỦA AI ==================
+            var possibleAIMoves = new List<(int i, int j, int score)>();
+
+            // Thêm nước đi thực tế của AI trước tiên
+            if (aiRow >= 0 && aiCol >= 0)
+            {
+                int score = minimaxAI.EvaluateCell(aiRow, aiCol, 2);
+                possibleAIMoves.Add((aiRow, aiCol, score));
+            }
+
+            // Thêm các nước tấn công/phòng thủ khác
+            possibleAIMoves.AddRange(
+                attackMoves.Concat(defenseMoves)
+                           .Where(x => !(x.i == aiRow && x.j == aiCol)) // tránh trùng
+                           .OrderByDescending(x => x.score)
+                           .Take(4) // chỉ cần thêm 4 nước nữa để tổng 5
+            );
+
+            // Chọn top 5 để gửi về JSON
+            var topPossibleAIMoves = possibleAIMoves
+                                        .Take(5)
+                                        .Select(x => new { row = x.i, col = x.j })
+                                        .ToList();
+
+
+            // ================== DANH SÁCH NƯỚC ĐI KHẢ THI CỦA NGƯỜI ==================
+            var possibleMoves = new List<(int row, int col, int score)>();
+
+            for (int i = 0; i < N; i++)
+            {
+                for (int j = 0; j < N; j++)
+                {
+                    if (board[i, j] == 0)
+                    {
+                        int score = minimaxAI.EvaluateCell(i, j, 1);
+                        if (score > 0) possibleMoves.Add((i, j, score));
+                    }
+                }
+            }
+
+            var topPossibleMoves = possibleMoves
+                                    .OrderByDescending(x => x.score)
+                                    .Take(5)
+                                    .Select(x => new { row = x.row, col = x.col })
+                                    .ToList();
+
+
+
+
             // ================== 4. KIỂM TRA AI THẮNG/HÒA ==================
             if (lastMoveAI != null)
             {
@@ -245,17 +297,19 @@ namespace Checkers_flag.Controllers
             }
 
             // ================== 5. TRẢ QUYỀN CHO NGƯỜI ==================
-            CurrentPlayer = 1;
             return Json(new
             {
                 success = true,
                 board = ToJagged(board),
-                currentPlayer = CurrentPlayer, 
+                currentPlayer = 1,
+                //possibleMoves = topPossibleMoves,
+                possibleAIMoves = topPossibleAIMoves,
                 lastMove = lastMoveAI,
                 isWin = false,
                 isDraw = false,
                 winner = 0
             });
+
         }
 
 

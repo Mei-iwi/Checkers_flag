@@ -12,6 +12,12 @@ let timerId = null;
 // Lấy div hiển thị bàn cờ trong HTML (id="board")
 const boardDiv = document.getElementById("board");
 
+let lastMoveGlobal = null; 
+
+let possibleMoves = []; // lưu 5 nước đi khả thi
+let movesHighlighted = false; // trạng thái highlight
+
+
 // ================== TẠO BÀN ==================
 // Hamg khởi tạo bàn cờ 10x10 trong DOM
 function createBoard() {
@@ -186,14 +192,14 @@ function handleClick(i, j) {
         }
 
 
-        var info = document.getElementById("showStep");
-        var span = document.createElement("span");
-        span.textContent = `Nước đi người chơi: (${i}, ${j})`;
-        span.classList.add("hu-move");
-        info.appendChild(span);
-        info.appendChild(document.createElement("br"));
+        //var info = document.getElementById("showStep");
+        //var span = document.createElement("span");
+        //span.textContent = `Nước đi người chơi: (${i}, ${j})`;
+        //span.classList.add("hu-move");
+        //info.appendChild(span);
+        //info.appendChild(document.createElement("br"));
 
-        info.scrollTop = info.scrollHeight;
+        //info.scrollTop = info.scrollHeight;
 
 
         // 🔹 BẮT ĐẦU LƯỢT AI — cho AI suy nghĩ và trừ thời gian
@@ -226,14 +232,14 @@ function updateBoardFromServer(res) {
     if (res.lastMove) {
         const { row, col } = res.lastMove;
 
-        var info = document.getElementById("showStep");
-        var span = document.createElement("span");
-        span.textContent = `Nước đi AI: (${row}, ${col}) `;
-        span.classList.add("ai-move");
-        info.appendChild(span);
-        info.appendChild(document.createElement("br"));
+        //var info = document.getElementById("showStep");
+        //var span = document.createElement("span");
+        //span.textContent = `Nước đi AI: (${row}, ${col}) `;
+        //span.classList.add("ai-move");
+        //info.appendChild(span);
+        //info.appendChild(document.createElement("br"));
 
-        info.scrollTop = info.scrollHeight;
+        //info.scrollTop = info.scrollHeight;
 
         // Xác định nước đi cuối là của ai
         let value = 0;
@@ -251,6 +257,27 @@ function updateBoardFromServer(res) {
 
         // 🔍 Kiểm tra xem có chuỗi thắng 5 quân không
         const win = findWinningLine(cells);
+
+
+        if (res.possibleAIMoves) {
+            possibleMoves = res.possibleAIMoves;
+
+            const showStepDiv = document.getElementById("showStep");
+
+            // Xóa danh sách cũ nếu có
+           // const oldSpan = document.getElementById("possibleMovesDisplay");
+            //if (oldSpan) oldSpan.remove();
+
+            const spanMoves = document.createElement("span");
+            spanMoves.id = "possibleMovesDisplay";
+            spanMoves.textContent = "💡 Nước đi khả thi AI: " + possibleMoves.map(m => `(${m.row}, ${m.col})`).join(", ");
+            spanMoves.style.fontWeight = "bold";
+            spanMoves.style.color = "blue";
+
+            showStepDiv.appendChild(spanMoves);
+            showStepDiv.appendChild(document.createElement("br"));
+        }
+
 
         if (win) {
             // Tô đỏ 5 ô thắng và hiển thị thông báo
@@ -593,3 +620,80 @@ function findWinningLine(board) {
     }
     return null;
 }
+
+
+
+function hidePossibleMoves() {
+    lastHighlightedMoves.forEach(move => {
+        const index = move.row * N + move.col;
+        const cellEl = boardDiv.querySelectorAll(".cell")[index];
+        if (cellEl) {
+            if (!lastMoveGlobal || lastMoveGlobal.row !== move.row || lastMoveGlobal.col !== move.col) {
+                cellEl.style.background = "#fff"; // reset màu
+            }
+        }
+    });
+    lastHighlightedMoves = [];
+    movesHighlighted = false;
+}
+
+
+
+let lastHighlightedMoves = []; // lưu các ô khả thi đã highlight
+function highlightPossibleMovesAI() {
+    // Xóa highlight cũ
+    lastHighlightedMoves.forEach(move => {
+        const index = move.row * N + move.col;
+        const cellEl = boardDiv.querySelectorAll(".cell")[index];
+        if (cellEl) {
+            // không ghi đè màu nước đi cuối
+            if (!lastMoveGlobal || lastMoveGlobal.row !== move.row || lastMoveGlobal.col !== move.col) {
+                cellEl.style.background = "#fff";
+            }
+        }
+    });
+
+    // Highlight các ô khả thi AI mới
+    if (possibleMoves && possibleMoves.length > 0) {
+        possibleMoves.forEach(move => {
+            const index = move.row * N + move.col;
+            const cellEl = boardDiv.querySelectorAll(".cell")[index];
+            if (cellEl && cells[move.row][move.col] === 0) { // chỉ ô trống
+                cellEl.style.background = "#ffff99"; // highlight
+            }
+        });
+        lastHighlightedMoves = [...possibleMoves];
+        movesHighlighted = true;
+    }
+}
+
+
+
+let highlightInterval = null;
+
+function startHighlighting() {
+    if (highlightInterval) clearInterval(highlightInterval);
+    highlightInterval = setInterval(() => {
+        if (movesVisible) {
+            highlightPossibleMovesAI(); // ❌ phải gọi hàm highlight AI
+        } else {
+            clearInterval(highlightInterval);
+        }
+    }, 500); // mỗi 500ms kiểm tra highlight mới
+}
+
+
+const btnShowInfo = document.getElementById("showInfo");
+let movesVisible = false; // trạng thái highlight
+
+btnShowInfo.addEventListener("click", () => {
+    movesVisible = !movesVisible; // toggle trạng thái
+    if (movesVisible) {
+        highlightPossibleMovesAI(); // highlight ngay lập tức
+        startHighlighting();        // bật update liên tục
+        btnShowInfo.textContent = "Ẩn nước đi khả thi";
+    } else {
+        hidePossibleMoves();        // xóa highlight
+        btnShowInfo.textContent = "Xem thông tin nước đi";
+    }
+});
