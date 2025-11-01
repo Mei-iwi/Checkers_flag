@@ -18,26 +18,22 @@
 }
 
 #board {
-    display: grid;
+    display: none; /* luôn là grid */
     grid-template-columns: repeat(15, 40px);
+    grid-template-rows: repeat(15, 40px);
+    gap: 0;
     border: 5px solid #deb887;
-    box-shadow: 0 0 15px;
+    box-shadow: 0 0 15px rgba(0,0,0,0.3);
     border-radius: 5px;
-    opacity: 0;
-    transition: opacity 1s ease-in-out;
-    /* gap: 2px; */
+    opacity: 0; /* ẩn mặc định */
+    visibility: hidden; /* ẩn mặc định */
+    transition: opacity 0.5s ease, visibility 0.5s ease;
 }
 
-  #board {
-    opacity: 0;
-    visibility: hidden;
-    transition: opacity 0.5s ease;
-}
-
-#board.show {
-    opacity: 1;
-    visibility: visible;
-}
+    #board.show {
+        opacity: 1;
+        visibility: visible; /* hiển thị khi add class show */
+    }
 
 .background-board {
     display: flex;
@@ -52,6 +48,7 @@
     padding: 30px 150px;
     box-shadow: 0 0 50px rgba(0, 128, 255);
     border-radius: 5px;
+    width: 85%;
 }
 
 .play {
@@ -227,19 +224,18 @@
 
 /* Bàn cờ cho desktop */
 
-#board {
-    display: none; /* Không chiếm diện tích */
-}
+/*#board {
+    display: none;*/ /* Không chiếm diện tích */
+/*}
 
     #board.show {
-        display: grid; /* Khi game bắt đầu */
-    }
+        display: grid;*/ /* Khi game bắt đầu */
+/*}*/
 
 
 
-@media(min-width: 850px){
+@media(min-width: 850px) {
     #board {
-        display: grid;
         grid-template-columns: repeat(15, 40px);
         grid-template-rows: repeat(15, 40px);
         gap: 0;
@@ -295,29 +291,35 @@
     }
 
     #board {
-        width: 95vw; /* luôn vừa màn hình */
-        height: 95vw; /* giữ tỉ lệ vuông */
+        display: grid;
+        width: 95vw; /* vừa màn hình trên mobile */
+        max-width: 600px; /* giới hạn trên desktop */
+        aspect-ratio: 1; /* luôn vuông */
         grid-template-columns: repeat(15, 1fr);
         grid-template-rows: repeat(15, 1fr);
+        gap: 0;
     }
 
     .cell {
         width: 100%;
         height: 100%;
-        /* font-size khoảng 10% kích thước ô */
-        font-size: calc(min(95vw / 15, 95vw / 15) * 0.6);
         display: flex;
         justify-content: center;
         align-items: center;
-        transition: background-color 0.1s;
+        font-size: calc(100%); /* để JS hoặc CSS scale theo ô */
+        line-height: 1;
+        user-select: none;
+        transition: background 0.2s, color 0.2s;
     }
 
     #end {
+        display: flex;
         width: 90%;
         max-width: 400px;
         flex-direction: column;
         align-items: center;
         gap: 5px;
+        align-content:centerl
     }
 
         #end span, #end #endgame {
@@ -326,21 +328,49 @@
             max-width: 400px;
             text-align: center;
             font-size: calc(14px + 0.5vw);
+            align-content:center;
         }
 
+    #who {
+        height: 100px;
+        align-content: center;
+    }
 
-            .background-board {
-                width: 95%;
-                padding: 20px 10px;
-            }
+    .background-board {
+        width: 95%;
+        padding: 20px 10px;
+    }
 
     #fight {
         font-size: 60px;
     }
-    #overlayCancel, overlay button{
-        width:100%;
+
+    #overlayCancel, overlay button {
+        width: 100%;
+    }
+    .overlay{
+        width:70%;
+    }
+    .overlay-content {
+        width: 100%;
     }
     #info, #showInfo, #showStep {
         display: none;
+    }
+
+    #timePlayerA {
+        order: 1;
+    }
+
+    #timePlayerB {
+        order: 2; 
+    }
+
+    #who {
+        order: 3;
+    }
+
+    #endgame {
+        order: 4;
     }
 }

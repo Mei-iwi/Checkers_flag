@@ -390,7 +390,7 @@ function switchTurn(nextPlayer) {
     if (currentPlayer === 1) {
         currentPlayerPvP = 1;
         // Lượt người
-        $("#who").text("Lượt đi hiện tại: ❌ (Người)");// cập nhật text thuộc về người
+        $("#who").text("Lượt đi: ❌ (Người)");// cập nhật text thuộc về người
         isAITurn = false;// mở khóa lượt người
         startTimerPvP();// bắt đầu đếm ngược 30s cho người
     } else {
@@ -399,7 +399,7 @@ function switchTurn(nextPlayer) {
 
         // Lượt AI
         isAITurn = true;// khóa lượt người
-        $("#who").html("Lượt đi hiện tại: <span style='font-weight:bold; color:blue'>O</span> (AI suy nghĩ...)");
+        $("#who").html("Lượt đi: <span style='font-weight:bold; color:blue'>O</span> (AI suy nghĩ...)");
         startTimerPvP();
 
         setTimeout(() => {  // Delay AI
@@ -445,7 +445,7 @@ $("#btnStart").click(function (e) {//bắt sự kiện click vào nút start
             const { row, col } = res.lastMove;
             cells[row][col] = 2; // chỉ lưu, chưa render
 
-            $("#who").html("Lượt đi hiện tại: <span style='font-weight:bold; color:blue'>O</span> (AI suy nghĩ...)");
+            $("#who").html("Lượt đi: <span style='font-weight:bold; color:blue'>O</span> (AI suy nghĩ...)");
             isAITurn = true;// khóa lượt người
 
             // Sau 2 giây mới render nước đi và bắt đầu đếm giờ
@@ -481,8 +481,11 @@ $("#btnStart").click(function (e) {//bắt sự kiện click vào nút start
         $("#start").hide();
         $("#who").addClass("show");
         $("#end").show();
-        $("#board").addClass("show");
 
+        // Hiện bàn cờ với fade-in mượt
+        const board = $("#board");
+        board.css("display", "grid");   // Bước 1: set display để DOM hiển thị
+        setTimeout(() => board.addClass("show"), 10); // Bước 2: fade-in opacity
     });
 });
 // ================== END GAME ==================
@@ -567,7 +570,7 @@ function resetBoard() {
     resetTimerPvP();
     // 4. Reset hiển thị timer và lượt chơi
     //$("#time").text("Time: 30 s");// hiển thị thời gian mặc định
-    $("#who").text("Lượt đi hiện tại: ❌ (Người)");// hiển thị lượt đi là người
+    $("#who").text("Lượt đi: ❌ (Người)");// hiển thị lượt đi là người
 }
 
 function findWinningLine(board) {
