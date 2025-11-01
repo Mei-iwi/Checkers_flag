@@ -22,8 +22,8 @@ namespace Checkers_flag.Models
         public int Evaluate(int i, int j, int player)
         {
 
-            if (ktr(i, j, 1)) return 1000;//Nếu player 1 thắng trả về giá trị 1000
-            if (ktr(i, j, 2)) return -1000;//nếu player 2 thắng trả về giá trị -1000
+            if (ktr(i, j, 1)) return 10000;//Nếu player 1 thắng trả về giá trị 1000
+            if (ktr(i, j, 2)) return -10000;//nếu player 2 thắng trả về giá trị -1000
             return diemtungnuoc(i, j, player); // trả về điểm herustic
         }
 
@@ -114,10 +114,10 @@ namespace Checkers_flag.Models
 
             // DOUBLE-THREAT
             int attackThreats = CountThreats(row, col, player);
-            if (attackThreats >= 2) score += 1000;//nếu có hơn hơn 2 nước nguy hiểm thì cộng nhiều điểm cho Al(ưu tiên tấn công để thắng chắc)
+            if (attackThreats >= 2) score += 350;//nếu có hơn hơn 2 nước nguy hiểm thì cộng nhiều điểm cho Al(ưu tiên tấn công để thắng chắc)
 
             int defenseThreats = CountThreats(row, col, opponent);// nếu đối thủ có hơn 2 nước nguy hiểm thì ưu tiên cho al phòng thủ 
-            if (defenseThreats >= 2) score += 500;
+            if (defenseThreats >= 2) score += 200;
 
             return score;
         }
@@ -181,12 +181,12 @@ namespace Checkers_flag.Models
                     break;
 
                 case 5:
-                    score = 1000; // thắng tuyệt đối
+                    score = 10000; // thắng tuyệt đối
                     break;
 
                 default:
                     // Chỉ cho điểm nếu có khả năng tạo đường thắng dài hơn
-                    score = (count > 5) ? 1000 : 0;
+                    score = (count > 5) ? 10000 : 0;
                     break;
             }
 
@@ -204,7 +204,7 @@ namespace Checkers_flag.Models
             foreach (var (dx, dy) in directions)
             {
                 int val = CountLineAdvanced(row, col, player, dx, dy);//CountLineAdvanced trả giá trị đánh giá cho chuỗi liên tiếp theo hướng (dx, dy)
-                if (val >= 500) threats++; // chuỗi mở 2 đầu hoặc gần thắng thì tăng biến mối đe dọa lên
+                if (val >= 500) threats+=2; // chuỗi mở 2 đầu hoặc gần thắng thì tăng biến mối đe dọa lên
             }
             return threats;
         }
@@ -405,7 +405,7 @@ namespace Checkers_flag.Models
                     bestI = i;
                     bestJ = j;
                     a[i, j] = 0; // khôi phục bàn cờ
-                    return 1000; // thắng tuyệt đối
+                    return 10000; // thắng tuyệt đối
                 }
 
                 //Nếu người chơi thắng ngay, chặn khẩn cấp
@@ -414,7 +414,7 @@ namespace Checkers_flag.Models
                     bestI = i;
                     bestJ = j;
                     a[i, j] = 0;
-                    return -1000;
+                    return -10000;
                 }
 
                 // Đánh giá điểm heuristic
@@ -425,7 +425,7 @@ namespace Checkers_flag.Models
                     eval += 10;
 
                 // Nếu chưa thắng/thua ngay và còn độ sâu, tiếp tục đệ quy
-                if (Math.Abs(eval) < 1000 && depth >= 1)
+                if (Math.Abs(eval) < 10000 && depth >= 1)
                     eval = minimax(depth - 1, !isAI, alpha, beta, out _, out _);
 
                 // Quay lại trạng thái ban đầu
